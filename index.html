@@ -244,7 +244,7 @@
             border-radius: 16px;
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255,255,255,0.2);
-            max-width: 200px;
+            max-width: 220px;
             font-size: 11px;
             line-height: 1.6;
         }
@@ -270,6 +270,113 @@
             font-family: 'Courier New', monospace;
             color: #00d9ff;
             font-weight: 700;
+        }
+
+        /* Height Measurement Panel */
+        .height-panel {
+            position: absolute;
+            bottom: 250px;
+            right: 20px;
+            background: rgba(0,0,0,0.9);
+            padding: 15px;
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255,215,0,0.4);
+            min-width: 180px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .height-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            opacity: 0.7;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .height-input-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .height-input {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
+            padding: 8px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .height-unit {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .height-result {
+            background: rgba(255,215,0,0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid rgba(255,215,0,0.3);
+        }
+
+        .height-result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .height-result-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .height-result-label {
+            font-size: 10px;
+            opacity: 0.7;
+        }
+
+        .height-result-value {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #ffd700;
+            font-weight: 700;
+        }
+
+        .height-calculate-btn {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            border: none;
+            border-radius: 8px;
+            color: #000;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.2s;
+        }
+
+        .height-calculate-btn:active {
+            transform: scale(0.95);
+        }
+
+        .height-method {
+            font-size: 10px;
+            opacity: 0.6;
+            margin-top: 8px;
+            text-align: center;
+            line-height: 1.4;
         }
 
         /* Measurement Mode Badge */
@@ -688,19 +795,66 @@
         <div class="info-panel">
             <div class="info-row">
                 <span class="info-label">Altitud</span>
-                <span class="info-value" id="altitude">-- m</span>
+                <span class="info-value" id="altitude">-- ft</span>
             </div>
             <div class="info-row">
                 <span class="info-label">Precisión GPS</span>
-                <span class="info-value" id="accuracy">-- m</span>
+                <span class="info-value" id="accuracy">-- ft</span>
             </div>
             <div class="info-row">
                 <span class="info-label">Temperatura</span>
-                <span class="info-value" id="temperature">-- °C</span>
+                <span class="info-value" id="temperature">-- °F</span>
             </div>
             <div class="info-row">
                 <span class="info-label">Batería</span>
                 <span class="info-value" id="battery">--% </span>
+            </div>
+        </div>
+
+        <!-- Height Measurement Panel -->
+        <div class="height-panel">
+            <div class="height-title">📏 Medición de Altura</div>
+            
+            <div class="height-input-row">
+                <input type="number" class="height-input" id="instrumentHeight" 
+                       value="5.5" step="0.1" min="0" max="20">
+                <span class="height-unit">ft</span>
+            </div>
+            <div style="font-size: 9px; opacity: 0.6; margin-bottom: 10px;">
+                Altura del instrumento desde el suelo
+            </div>
+
+            <div class="height-input-row">
+                <input type="number" class="height-input" id="horizontalDistance" 
+                       value="0" step="1" min="0" max="1000" placeholder="Distancia">
+                <span class="height-unit">ft</span>
+            </div>
+            <div style="font-size: 9px; opacity: 0.6; margin-bottom: 10px;">
+                Distancia horizontal al objetivo (opcional)
+            </div>
+
+            <button class="height-calculate-btn" id="calculateHeight">
+                🎯 Calcular Altura
+            </button>
+
+            <div class="height-result" id="heightResult" style="display: none;">
+                <div class="height-result-row">
+                    <span class="height-result-label">Altura Objetivo:</span>
+                    <span class="height-result-value" id="targetHeight">-- ft</span>
+                </div>
+                <div class="height-result-row">
+                    <span class="height-result-label">Diferencia:</span>
+                    <span class="height-result-value" id="heightDifference">-- ft</span>
+                </div>
+                <div class="height-result-row" id="distanceCalcRow" style="display: none;">
+                    <span class="height-result-label">Dist. Calculada:</span>
+                    <span class="height-result-value" id="calculatedDistance">-- ft</span>
+                </div>
+            </div>
+
+            <div class="height-method">
+                Usa ángulo vertical + distancia<br>
+                o mide dos ángulos (estación-altura)
             </div>
         </div>
 
@@ -716,7 +870,7 @@
             </div>
             <div class="gps-row">
                 <span style="opacity: 0.7;">ALT:</span>
-                <span id="altitudeGps">-- m</span>
+                <span id="altitudeGps">-- ft</span>
             </div>
         </div>
 
@@ -795,6 +949,40 @@
         let zoomLevel = 1;
         let calibrationData = { pitch: [], roll: [], heading: [] };
         let isCalibrated = false;
+
+        // Height measurement state
+        let heightMeasurements = {
+            point1: null, // First angle measurement
+            point2: null  // Second angle measurement (for station-height method)
+        };
+
+        // Unit conversion functions
+        function metersToFeet(meters) {
+            return meters * 3.28084;
+        }
+
+        function feetToMeters(feet) {
+            return feet / 3.28084;
+        }
+
+        function celsiusToFahrenheit(celsius) {
+            return (celsius * 9/5) + 32;
+        }
+
+        function formatImperialHeight(feet) {
+            const wholeFeet = Math.floor(feet);
+            const inches = (feet - wholeFeet) * 12;
+            const wholeInches = Math.floor(inches);
+            const fractionInches = inches - wholeInches;
+            
+            if (wholeInches === 0 && fractionInches < 0.1) {
+                return `${wholeFeet}'`;
+            } else if (fractionInches < 0.1) {
+                return `${wholeFeet}' ${wholeInches}"`;
+            } else {
+                return `${wholeFeet}' ${inches.toFixed(1)}"`;
+            }
+        }
 
         // Sensor data
         let sensorData = {
@@ -906,17 +1094,20 @@
             sensorData.speed = position.coords.speed;
             sensorData.heading = position.coords.heading;
 
-            // Update GPS display
+            // Convert to imperial and update GPS display
+            const altitudeFt = sensorData.altitude ? metersToFeet(sensorData.altitude) : null;
+            const accuracyFt = sensorData.accuracy ? metersToFeet(sensorData.accuracy) : null;
+
             $('latitude').textContent = sensorData.latitude?.toFixed(6) || '--';
             $('longitude').textContent = sensorData.longitude?.toFixed(6) || '--';
-            $('altitudeGps').textContent = sensorData.altitude ? sensorData.altitude.toFixed(1) + ' m' : '--';
-            $('altitude').textContent = sensorData.altitude ? sensorData.altitude.toFixed(1) + ' m' : '--';
-            $('accuracy').textContent = sensorData.accuracy ? '±' + sensorData.accuracy.toFixed(1) + ' m' : '--';
+            $('altitudeGps').textContent = altitudeFt ? altitudeFt.toFixed(1) + ' ft' : '--';
+            $('altitude').textContent = altitudeFt ? altitudeFt.toFixed(1) + ' ft' : '--';
+            $('accuracy').textContent = accuracyFt ? '±' + accuracyFt.toFixed(1) + ' ft' : '--';
 
             // Update status
-            if (sensorData.accuracy && sensorData.accuracy < 10) {
+            if (accuracyFt && accuracyFt < 33) { // ~10m
                 $('statusText').textContent = 'GPS: Señal excelente';
-            } else if (sensorData.accuracy && sensorData.accuracy < 20) {
+            } else if (accuracyFt && accuracyFt < 66) { // ~20m
                 $('statusText').textContent = 'GPS: Señal buena';
             } else {
                 $('statusText').textContent = 'GPS: Señal regular';
@@ -1069,8 +1260,114 @@
             $('measurementsLog').classList.remove('show');
         });
 
+        // Height calculation
+        $('calculateHeight').addEventListener('click', () => {
+            calculateHeight();
+        });
+
+        function calculateHeight() {
+            const instrumentHeightFt = parseFloat($('instrumentHeight').value) || 5.5;
+            const horizontalDistanceFt = parseFloat($('horizontalDistance').value) || 0;
+            const verticalAngle = sensorData.beta - (sensorData.pitchOffset || 0);
+            
+            // Convert to radians
+            const angleRad = verticalAngle * (Math.PI / 180);
+            
+            let targetHeight, heightDifference, calculatedDistance;
+            
+            if (horizontalDistanceFt > 0) {
+                // Method 1: Known horizontal distance
+                // Height difference = distance × tan(angle)
+                heightDifference = horizontalDistanceFt * Math.tan(angleRad);
+                targetHeight = instrumentHeightFt + heightDifference;
+                
+                $('heightResult').style.display = 'block';
+                $('targetHeight').textContent = formatImperialHeight(targetHeight);
+                $('heightDifference').textContent = (heightDifference >= 0 ? '+' : '') + formatImperialHeight(heightDifference);
+                $('distanceCalcRow').style.display = 'none';
+                
+                showToast(`✓ Altura: ${formatImperialHeight(targetHeight)}`);
+            } else {
+                // Method 2: Two-angle method (requires two measurements)
+                if (!heightMeasurements.point1) {
+                    // Store first measurement
+                    heightMeasurements.point1 = {
+                        angle: verticalAngle,
+                        instrumentHeight: instrumentHeightFt
+                    };
+                    showToast('📍 Punto 1 guardado. Muévete y mide de nuevo.');
+                } else {
+                    // Calculate using two points
+                    // This requires GPS distance between two stations
+                    if (sensorData.latitude && sensorData.longitude && heightMeasurements.point1.latitude) {
+                        const stationDistance = calculateGPSDistance(
+                            heightMeasurements.point1.latitude,
+                            heightMeasurements.point1.longitude,
+                            sensorData.latitude,
+                            sensorData.longitude
+                        );
+                        
+                        const stationDistanceFt = metersToFeet(stationDistance);
+                        
+                        // Using trigonometry with two stations
+                        const angle1Rad = heightMeasurements.point1.angle * (Math.PI / 180);
+                        const angle2Rad = verticalAngle * (Math.PI / 180);
+                        
+                        // Calculate target height using surveying formulas
+                        const h1 = heightMeasurements.point1.instrumentHeight;
+                        const h2 = instrumentHeightFt;
+                        
+                        // Distance from station 1 to target
+                        const d1 = stationDistanceFt * Math.sin(angle2Rad) / Math.sin(angle2Rad - angle1Rad);
+                        
+                        heightDifference = d1 * Math.tan(angle1Rad);
+                        targetHeight = h1 + heightDifference;
+                        
+                        $('heightResult').style.display = 'block';
+                        $('targetHeight').textContent = formatImperialHeight(targetHeight);
+                        $('heightDifference').textContent = (heightDifference >= 0 ? '+' : '') + formatImperialHeight(heightDifference);
+                        $('distanceCalcRow').style.display = 'block';
+                        $('calculatedDistance').textContent = formatImperialHeight(d1);
+                        
+                        showToast(`✓ Altura calculada: ${formatImperialHeight(targetHeight)}`);
+                        
+                        // Reset for next measurement
+                        heightMeasurements.point1 = null;
+                    } else {
+                        showToast('⚠️ Ingresa distancia horizontal o activa GPS');
+                        heightMeasurements.point1 = null;
+                    }
+                }
+            }
+            
+            // Store GPS coordinates with first point
+            if (heightMeasurements.point1 && !heightMeasurements.point1.latitude) {
+                heightMeasurements.point1.latitude = sensorData.latitude;
+                heightMeasurements.point1.longitude = sensorData.longitude;
+            }
+        }
+
+        // Calculate GPS distance using Haversine formula
+        function calculateGPSDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371000; // Earth radius in meters
+            const toRad = x => x * Math.PI / 180;
+            
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
         // Capture measurement
         $('captureBtn').addEventListener('click', () => {
+            const instrumentHeightFt = parseFloat($('instrumentHeight').value) || 5.5;
+            const horizontalDistanceFt = parseFloat($('horizontalDistance').value) || 0;
+            
             const measurement = {
                 timestamp: new Date().toLocaleString(),
                 mode: currentMode,
@@ -1079,9 +1376,19 @@
                 zenith: 90 - (sensorData.beta - (sensorData.pitchOffset || 0)),
                 latitude: sensorData.latitude,
                 longitude: sensorData.longitude,
-                altitude: sensorData.altitude,
-                accuracy: sensorData.accuracy
+                altitude: sensorData.altitude ? metersToFeet(sensorData.altitude) : null,
+                accuracy: sensorData.accuracy ? metersToFeet(sensorData.accuracy) : null,
+                instrumentHeight: instrumentHeightFt,
+                horizontalDistance: horizontalDistanceFt
             };
+            
+            // Calculate target height if distance provided
+            if (horizontalDistanceFt > 0) {
+                const angleRad = measurement.vertical * (Math.PI / 180);
+                const heightDiff = horizontalDistanceFt * Math.tan(angleRad);
+                measurement.targetHeight = instrumentHeightFt + heightDiff;
+                measurement.heightDifference = heightDiff;
+            }
             
             measurements.push(measurement);
             showToast(`✓ Medición ${measurements.length} capturada`);
@@ -1108,8 +1415,12 @@
                         Z: ${m.zenith.toFixed(4)}°<br>
                         Lat: ${m.latitude?.toFixed(6) || 'N/A'}<br>
                         Lon: ${m.longitude?.toFixed(6) || 'N/A'}<br>
-                        Alt: ${m.altitude?.toFixed(2) || 'N/A'} m<br>
-                        Acc: ±${m.accuracy?.toFixed(1) || 'N/A'} m
+                        Alt: ${m.altitude?.toFixed(2) || 'N/A'} ft<br>
+                        Acc: ±${m.accuracy?.toFixed(1) || 'N/A'} ft<br>
+                        Inst. Height: ${m.instrumentHeight?.toFixed(2) || 'N/A'} ft
+                        ${m.horizontalDistance ? `<br>Horiz. Dist: ${m.horizontalDistance.toFixed(2)} ft` : ''}
+                        ${m.targetHeight ? `<br><strong>Target Height: ${formatImperialHeight(m.targetHeight)}</strong>` : ''}
+                        ${m.heightDifference ? `<br>Height Diff: ${(m.heightDifference >= 0 ? '+' : '')}${formatImperialHeight(m.heightDifference)}` : ''}
                     </div>
                 </div>
             `).reverse().join('');
@@ -1142,7 +1453,7 @@
         // Export measurements
         function exportMeasurements() {
             const csv = [
-                ['#', 'Timestamp', 'Mode', 'Hz (°)', 'V (°)', 'Z (°)', 'Lat', 'Lon', 'Alt (m)', 'Acc (m)'],
+                ['#', 'Timestamp', 'Mode', 'Hz (°)', 'V (°)', 'Z (°)', 'Lat', 'Lon', 'Alt (ft)', 'Acc (ft)', 'Inst Height (ft)', 'Horiz Dist (ft)', 'Target Height (ft)', 'Height Diff (ft)'],
                 ...measurements.map((m, i) => [
                     i + 1,
                     m.timestamp,
@@ -1153,7 +1464,11 @@
                     m.latitude?.toFixed(6) || '',
                     m.longitude?.toFixed(6) || '',
                     m.altitude?.toFixed(2) || '',
-                    m.accuracy?.toFixed(1) || ''
+                    m.accuracy?.toFixed(1) || '',
+                    m.instrumentHeight?.toFixed(2) || '',
+                    m.horizontalDistance?.toFixed(2) || '',
+                    m.targetHeight?.toFixed(2) || '',
+                    m.heightDifference?.toFixed(2) || ''
                 ])
             ].map(row => row.join(',')).join('\n');
             
