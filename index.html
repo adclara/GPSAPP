@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="description" content="Professional Digital Theodolite - Samsung Galaxy S23 Ultra">
+    <title>Digital Theodolite Pro - S23 Ultra</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Samsung Sans', Arial, sans-serif;
+            background: #000; 
+            color: #fff; 
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            position: relative;
+        }
+
+        /* Camera Feed */
+        #cameraFeed {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* Crosshair */
+        .crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+        }
+
+        .crosshair::before,
+        .crosshair::after {
+            content: '';
+            position: absolute;
+            background: #00ff88;
+            box-shadow: 0 0 10px rgba(0,255,136,0.8);
+        }
+
+        .crosshair::before {
+            width: 2px;
+            height: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .crosshair::after {
+            height: 2px;
+            width: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .crosshair-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            border: 2px solid #00ff88;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(0,255,136,0.5);
+        }
+
+        /* Level Bubble Indicators */
+        .level-container {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px 25px;
+            border-radius: 50px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .bubble {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bubble-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.7;
+            font-weight: 700;
+        }
+
+        .bubble-indicator {
+            width: 100px;
+            height: 40px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .bubble-ball {
+            width: 30px;
+            height: 30px;
+            background: radial-gradient(circle at 30% 30%, #00ff88, #00cc66);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.1s ease-out;
+            box-shadow: 0 0 15px rgba(0,255,136,0.6);
+        }
+
+        .level-value {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            color: #00ff88;
+        }
+
+        /* Angle Display */
+        .angle-display {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            padding: 20px 30px;
+            border-radius: 24px;
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(0,217,255,0.4);
+            min-width: 320px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+        }
+
+        .angle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .angle-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .angle-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            opacity: 0.7;
+            font-weight: 700;
+        }
+
+        .angle-value {
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            font-weight: 700;
+            color: #00d9ff;
+            text-align: right;
+            min-width: 120px;
+        }
+
+        .angle-unit {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-left: 5px;
+        }
+
+        /* Controls Panel */
+        .controls {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: all;
+        }
+
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.8);
+            border: 2px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .control-btn:active {
+            transform: scale(0.9);
+            background: rgba(0,217,255,0.2);
+            border-color: #00d9ff;
+        }
+
+        .control-btn.active {
+            background: rgba(0,255,136,0.2);
+            border-color: #00ff88;
+        }
+
+        /* Info Panel */
+        .info-panel {
+            position: absolute;
+            top: 100px;
+            left: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+            max-width: 200px;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-label {
+            opacity: 0.7;
+            text-transform: uppercase;
+            font-size: 9px;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-family: 'Courier New', monospace;
+            color: #00d9ff;
+            font-weight: 700;
+        }
+
+        /* Measurement Mode Badge */
+        .mode-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #00d9ff, #00a8ff);
+            color: #000;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(0,217,255,0.4);
+        }
+
+        /* Compass Display */
+        .compass {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            background: rgba(0,0,0,0.8);
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .compass-needle {
+            position: absolute;
+            width: 2px;
+            height: 30px;
+            background: linear-gradient(to bottom, #ff0055, #00ff88);
+            top: 10px;
+            left: 50%;
+            transform-origin: bottom center;
+            transition: transform 0.3s ease-out;
+            box-shadow: 0 0 10px rgba(255,0,85,0.8);
+        }
+
+        .compass-value {
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            color: #00d9ff;
+            margin-top: 35px;
+        }
+
+        /* Zoom Control */
+        .zoom-control {
+            position: absolute;
+            left: 20px;
+            bottom: 140px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .zoom-btn {
+            width: 50px;
+            height: 50px;
+            background: rgba(0,0,0,0.8);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            backdrop-filter: blur(20px);
+            transition: all 0.2s;
+            pointer-events: all;
+        }
+
+        .zoom-btn:active {
+            transform: scale(0.9);
+            background: rgba(0,217,255,0.2);
+        }
+
+        /* GPS Coordinates */
+        .gps-display {
+            position: absolute;
+            bottom: 140px;
+            left: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 12px 16px;
+            border-radius: 12px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+            font-size: 10px;
+            max-width: 180px;
+        }
+
+        .gps-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .gps-row:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Status Indicator */
+        .status-indicator {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 8px 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Main Action Button */
+        .main-action {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00ff88, #00d968);
+            border: 4px solid rgba(255,255,255,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            cursor: pointer;
+            z-index: 10;
+            pointer-events: all;
+            box-shadow: 0 6px 30px rgba(0,255,136,0.5);
+            transition: all 0.2s;
+        }
+
+        .main-action:active {
+            transform: translateX(-50%) scale(0.9);
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: rgba(20,20,30,0.95);
+            color: #fff;
+            padding: 20px 30px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.3);
+            font-size: 14px;
+            font-weight: 600;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+            backdrop-filter: blur(30px);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.8);
+            text-align: center;
+            max-width: 80%;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* Measurements Log */
+        .measurements-log {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+            backdrop-filter: blur(20px);
+        }
+
+        .measurements-log.show {
+            display: flex;
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .log-title {
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        .log-close {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 24px;
+        }
+
+        .measurement-item {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .measurement-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .measurement-data {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.8;
+            color: #00d9ff;
+        }
+
+        /* Camera permission prompt */
+        .permission-prompt {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .permission-icon {
+            font-size: 64px;
+        }
+
+        .permission-text {
+            font-size: 18px;
+            font-weight: 600;
+            line-height: 1.6;
+        }
+
+        .permission-btn {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #00d9ff, #00a8ff);
+            color: #000;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 6px 30px rgba(0,217,255,0.4);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Calibration Mode */
+        .calibration-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 50;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .calibration-overlay.show {
+            display: flex;
+        }
+
+        .calibration-content {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .calibration-title {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .calibration-instruction {
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .calibration-progress {
+            width: 200px;
+            height: 200px;
+            border: 8px solid rgba(255,255,255,0.2);
+            border-top-color: #00ff88;
+            border-radius: 50%;
+            animation: spin 2s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Permission Prompt -->
+    <div class="permission-prompt" id="permissionPrompt">
+        <div class="permission-icon">📷</div>
+        <div class="permission-text">
+            Este teodolito digital requiere acceso a:<br><br>
+            • Cámara (para visualización)<br>
+            • Sensores de orientación<br>
+            • GPS de alta precisión<br>
+            • Giroscopio y acelerómetro
+        </div>
+        <button class="permission-btn" id="requestPermissions">Activar Teodolito</button>
+    </div>
+
+    <!-- Camera Feed -->
+    <video id="cameraFeed" autoplay playsinline muted></video>
+
+    <!-- Overlay Elements -->
+    <div class="overlay">
+        <!-- Status Indicator -->
+        <div class="status-indicator" id="statusIndicator">
+            <div class="status-dot"></div>
+            <span id="statusText">Calibrando sensores...</span>
+        </div>
+
+        <!-- Mode Badge -->
+        <div class="mode-badge" id="modeBadge">HORIZONTAL</div>
+
+        <!-- Level Indicators -->
+        <div class="level-container">
+            <div class="bubble">
+                <div class="bubble-label">Pitch (X)</div>
+                <div class="bubble-indicator">
+                    <div class="bubble-ball" id="bubblePitch"></div>
+                </div>
+                <div class="level-value" id="pitchValue">0.0°</div>
+            </div>
+            <div class="bubble">
+                <div class="bubble-label">Roll (Y)</div>
+                <div class="bubble-indicator">
+                    <div class="bubble-ball" id="bubbleRoll"></div>
+                </div>
+                <div class="level-value" id="rollValue">0.0°</div>
+            </div>
+        </div>
+
+        <!-- Crosshair -->
+        <div class="crosshair"></div>
+        <div class="crosshair-circle"></div>
+
+        <!-- Compass -->
+        <div class="compass">
+            <div class="compass-needle" id="compassNeedle"></div>
+            <div class="compass-value" id="compassValue">0°</div>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="info-panel">
+            <div class="info-row">
+                <span class="info-label">Altitud</span>
+                <span class="info-value" id="altitude">-- m</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Precisión GPS</span>
+                <span class="info-value" id="accuracy">-- m</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Temperatura</span>
+                <span class="info-value" id="temperature">-- °C</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Batería</span>
+                <span class="info-value" id="battery">--% </span>
+            </div>
+        </div>
+
+        <!-- GPS Display -->
+        <div class="gps-display">
+            <div class="gps-row">
+                <span style="opacity: 0.7;">LAT:</span>
+                <span id="latitude">--.------</span>
+            </div>
+            <div class="gps-row">
+                <span style="opacity: 0.7;">LON:</span>
+                <span id="longitude">--.------</span>
+            </div>
+            <div class="gps-row">
+                <span style="opacity: 0.7;">ALT:</span>
+                <span id="altitudeGps">-- m</span>
+            </div>
+        </div>
+
+        <!-- Angle Display -->
+        <div class="angle-display">
+            <div class="angle-row">
+                <span class="angle-label">Horizontal (Hz)</span>
+                <span class="angle-value">
+                    <span id="horizontalAngle">0.0000</span><span class="angle-unit">°</span>
+                </span>
+            </div>
+            <div class="angle-row">
+                <span class="angle-label">Vertical (V)</span>
+                <span class="angle-value">
+                    <span id="verticalAngle">0.0000</span><span class="angle-unit">°</span>
+                </span>
+            </div>
+            <div class="angle-row">
+                <span class="angle-label">Zenith (Z)</span>
+                <span class="angle-value">
+                    <span id="zenithAngle">90.0000</span><span class="angle-unit">°</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Control Buttons -->
+    <div class="controls">
+        <div class="control-btn" id="lockBtn" title="Bloquear ángulo">🔒</div>
+        <div class="control-btn" id="zeroBtn" title="Cero horizontal">⊕</div>
+        <div class="control-btn" id="modeBtn" title="Cambiar modo">⟲</div>
+        <div class="control-btn" id="historyBtn" title="Ver mediciones">📋</div>
+    </div>
+
+    <!-- Zoom Controls -->
+    <div class="zoom-control">
+        <div class="zoom-btn" id="zoomIn">+</div>
+        <div class="zoom-btn" id="zoomOut">−</div>
+    </div>
+
+    <!-- Main Capture Button -->
+    <div class="main-action" id="captureBtn">📍</div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Measurements Log -->
+    <div class="measurements-log" id="measurementsLog">
+        <div class="log-header">
+            <div class="log-title">📊 Registro de Mediciones</div>
+            <div class="log-close" id="closeLog">×</div>
+        </div>
+        <div id="measurementsList"></div>
+    </div>
+
+    <!-- Calibration Overlay -->
+    <div class="calibration-overlay" id="calibrationOverlay">
+        <div class="calibration-content">
+            <div class="calibration-title">Calibrando Sensores</div>
+            <div class="calibration-instruction">
+                Mantenga el dispositivo quieto en posición horizontal<br>
+                para calibrar el acelerómetro y giroscopio
+            </div>
+            <div class="calibration-progress"></div>
+            <div id="calibrationStatus">Iniciando...</div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let stream = null;
+        let measurements = [];
+        let isLocked = false;
+        let horizontalZero = 0;
+        let currentMode = 'horizontal'; // horizontal, vertical, slope
+        let zoomLevel = 1;
+        let calibrationData = { pitch: [], roll: [], heading: [] };
+        let isCalibrated = false;
+
+        // Sensor data
+        let sensorData = {
+            alpha: 0,  // compass/heading (0-360)
+            beta: 0,   // pitch (front-back tilt) (-180 to 180)
+            gamma: 0,  // roll (left-right tilt) (-90 to 90)
+            latitude: null,
+            longitude: null,
+            altitude: null,
+            accuracy: null,
+            speed: null,
+            heading: null
+        };
+
+        // DOM elements
+        const $ = id => document.getElementById(id);
+        const cameraFeed = $('cameraFeed');
+        const permissionPrompt = $('permissionPrompt');
+        const calibrationOverlay = $('calibrationOverlay');
+
+        // Toast notification
+        function showToast(message, duration = 3000) {
+            const toast = $('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), duration);
+            
+            if (navigator.vibrate) navigator.vibrate(50);
+        }
+
+        // Initialize camera
+        async function initCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 3840 },
+                        height: { ideal: 2160 }
+                    }
+                });
+                cameraFeed.srcObject = stream;
+                
+                // Apply zoom
+                const track = stream.getVideoTracks()[0];
+                const capabilities = track.getCapabilities();
+                if (capabilities.zoom) {
+                    await track.applyConstraints({
+                        advanced: [{ zoom: zoomLevel }]
+                    });
+                }
+            } catch (error) {
+                showToast('Error: No se puede acceder a la cámara');
+                console.error(error);
+            }
+        }
+
+        // Initialize sensors
+        function initSensors() {
+            // Device orientation (compass, pitch, roll)
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener('deviceorientation', handleOrientation);
+            }
+
+            // GPS
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(
+                    handleGPS,
+                    error => console.error('GPS error:', error),
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
+                );
+            }
+
+            // Battery
+            if (navigator.getBattery) {
+                navigator.getBattery().then(battery => {
+                    updateBattery(battery);
+                    battery.addEventListener('levelchange', () => updateBattery(battery));
+                });
+            }
+        }
+
+        function handleOrientation(event) {
+            // Raw sensor values
+            sensorData.alpha = event.alpha || 0;  // 0-360 compass
+            sensorData.beta = event.beta || 0;    // -180 to 180 pitch
+            sensorData.gamma = event.gamma || 0;  // -90 to 90 roll
+
+            // Apply calibration offsets if calibrated
+            if (isCalibrated) {
+                // Normalize and update displays
+                updateLevelBubbles();
+                updateCompass();
+                updateAngles();
+            } else if (!calibrationOverlay.classList.contains('show')) {
+                // Start calibration
+                startCalibration();
+            }
+        }
+
+        function handleGPS(position) {
+            sensorData.latitude = position.coords.latitude;
+            sensorData.longitude = position.coords.longitude;
+            sensorData.altitude = position.coords.altitude;
+            sensorData.accuracy = position.coords.accuracy;
+            sensorData.speed = position.coords.speed;
+            sensorData.heading = position.coords.heading;
+
+            // Update GPS display
+            $('latitude').textContent = sensorData.latitude?.toFixed(6) || '--';
+            $('longitude').textContent = sensorData.longitude?.toFixed(6) || '--';
+            $('altitudeGps').textContent = sensorData.altitude ? sensorData.altitude.toFixed(1) + ' m' : '--';
+            $('altitude').textContent = sensorData.altitude ? sensorData.altitude.toFixed(1) + ' m' : '--';
+            $('accuracy').textContent = sensorData.accuracy ? '±' + sensorData.accuracy.toFixed(1) + ' m' : '--';
+
+            // Update status
+            if (sensorData.accuracy && sensorData.accuracy < 10) {
+                $('statusText').textContent = 'GPS: Señal excelente';
+            } else if (sensorData.accuracy && sensorData.accuracy < 20) {
+                $('statusText').textContent = 'GPS: Señal buena';
+            } else {
+                $('statusText').textContent = 'GPS: Señal regular';
+            }
+        }
+
+        function updateBattery(battery) {
+            const level = Math.round(battery.level * 100);
+            $('battery').textContent = level + '%';
+        }
+
+        // Calibration
+        function startCalibration() {
+            calibrationOverlay.classList.add('show');
+            calibrationData = { pitch: [], roll: [], heading: [] };
+            
+            $('calibrationStatus').textContent = 'Recopilando datos... 0/50';
+            
+            const calibrationInterval = setInterval(() => {
+                if (calibrationData.pitch.length < 50) {
+                    calibrationData.pitch.push(sensorData.beta);
+                    calibrationData.roll.push(sensorData.gamma);
+                    calibrationData.heading.push(sensorData.alpha);
+                    $('calibrationStatus').textContent = `Recopilando datos... ${calibrationData.pitch.length}/50`;
+                } else {
+                    clearInterval(calibrationInterval);
+                    finishCalibration();
+                }
+            }, 100);
+        }
+
+        function finishCalibration() {
+            // Calculate average offsets
+            const avgPitch = calibrationData.pitch.reduce((a, b) => a + b) / calibrationData.pitch.length;
+            const avgRoll = calibrationData.roll.reduce((a, b) => a + b) / calibrationData.roll.length;
+            
+            // Store offsets
+            sensorData.pitchOffset = avgPitch;
+            sensorData.rollOffset = avgRoll;
+            
+            isCalibrated = true;
+            calibrationOverlay.classList.remove('show');
+            $('statusText').textContent = 'Sistema calibrado';
+            showToast('✓ Calibración completada');
+        }
+
+        // Update displays
+        function updateLevelBubbles() {
+            const pitch = sensorData.beta - (sensorData.pitchOffset || 0);
+            const roll = sensorData.gamma - (sensorData.rollOffset || 0);
+            
+            // Clamp values
+            const pitchClamped = Math.max(-45, Math.min(45, pitch));
+            const rollClamped = Math.max(-45, Math.min(45, roll));
+            
+            // Update bubble positions (centered at 0, moves ±35px max)
+            const pitchOffset = (pitchClamped / 45) * 35;
+            const rollOffset = (rollClamped / 45) * 35;
+            
+            $('bubblePitch').style.transform = `translate(-50%, calc(-50% + ${pitchOffset}px))`;
+            $('bubbleRoll').style.transform = `translate(calc(-50% + ${rollOffset}px), -50%)`;
+            
+            $('pitchValue').textContent = pitch.toFixed(1) + '°';
+            $('rollValue').textContent = roll.toFixed(1) + '°';
+            
+            // Change color if level
+            if (Math.abs(pitch) < 0.5 && Math.abs(roll) < 0.5) {
+                $('bubblePitch').style.background = 'radial-gradient(circle at 30% 30%, #00ff88, #00cc66)';
+                $('bubbleRoll').style.background = 'radial-gradient(circle at 30% 30%, #00ff88, #00cc66)';
+            } else {
+                $('bubblePitch').style.background = 'radial-gradient(circle at 30% 30%, #ffd700, #ffaa00)';
+                $('bubbleRoll').style.background = 'radial-gradient(circle at 30% 30%, #ffd700, #ffaa00)';
+            }
+        }
+
+        function updateCompass() {
+            let heading = sensorData.alpha;
+            
+            // Adjust for device heading if available
+            if (sensorData.heading !== null) {
+                heading = sensorData.heading;
+            }
+            
+            $('compassNeedle').style.transform = `translateX(-50%) rotate(${heading}deg)`;
+            $('compassValue').textContent = Math.round(heading) + '°';
+        }
+
+        function updateAngles() {
+            // Calculate angles
+            let horizontalAngle = sensorData.alpha - horizontalZero;
+            if (horizontalAngle < 0) horizontalAngle += 360;
+            if (horizontalAngle > 360) horizontalAngle -= 360;
+            
+            let verticalAngle = sensorData.beta - (sensorData.pitchOffset || 0);
+            let zenithAngle = 90 - verticalAngle;
+            
+            // Update displays with high precision
+            $('horizontalAngle').textContent = horizontalAngle.toFixed(4);
+            $('verticalAngle').textContent = verticalAngle.toFixed(4);
+            $('zenithAngle').textContent = zenithAngle.toFixed(4);
+        }
+
+        // Zoom controls
+        async function updateZoom(delta) {
+            if (!stream) return;
+            
+            const track = stream.getVideoTracks()[0];
+            const capabilities = track.getCapabilities();
+            
+            if (capabilities.zoom) {
+                zoomLevel = Math.max(1, Math.min(capabilities.zoom.max, zoomLevel + delta));
+                await track.applyConstraints({
+                    advanced: [{ zoom: zoomLevel }]
+                });
+                showToast(`Zoom: ${zoomLevel.toFixed(1)}x`);
+            } else {
+                showToast('Zoom no soportado en este dispositivo');
+            }
+        }
+
+        $('zoomIn').addEventListener('click', () => updateZoom(0.5));
+        $('zoomOut').addEventListener('click', () => updateZoom(-0.5));
+
+        // Control buttons
+        $('lockBtn').addEventListener('click', () => {
+            isLocked = !isLocked;
+            $('lockBtn').classList.toggle('active');
+            showToast(isLocked ? '🔒 Ángulo bloqueado' : '🔓 Ángulo desbloqueado');
+        });
+
+        $('zeroBtn').addEventListener('click', () => {
+            horizontalZero = sensorData.alpha;
+            showToast('⊕ Cero horizontal establecido');
+        });
+
+        $('modeBtn').addEventListener('click', () => {
+            const modes = ['horizontal', 'vertical', 'slope'];
+            const currentIndex = modes.indexOf(currentMode);
+            currentMode = modes[(currentIndex + 1) % modes.length];
+            $('modeBadge').textContent = currentMode.toUpperCase();
+            showToast(`Modo: ${currentMode}`);
+        });
+
+        $('historyBtn').addEventListener('click', () => {
+            $('measurementsLog').classList.add('show');
+            renderMeasurements();
+        });
+
+        $('closeLog').addEventListener('click', () => {
+            $('measurementsLog').classList.remove('show');
+        });
+
+        // Capture measurement
+        $('captureBtn').addEventListener('click', () => {
+            const measurement = {
+                timestamp: new Date().toLocaleString(),
+                mode: currentMode,
+                horizontal: (sensorData.alpha - horizontalZero + 360) % 360,
+                vertical: sensorData.beta - (sensorData.pitchOffset || 0),
+                zenith: 90 - (sensorData.beta - (sensorData.pitchOffset || 0)),
+                latitude: sensorData.latitude,
+                longitude: sensorData.longitude,
+                altitude: sensorData.altitude,
+                accuracy: sensorData.accuracy
+            };
+            
+            measurements.push(measurement);
+            showToast(`✓ Medición ${measurements.length} capturada`);
+            
+            if (navigator.vibrate) navigator.vibrate([50, 50, 100]);
+        });
+
+        function renderMeasurements() {
+            const list = $('measurementsList');
+            if (measurements.length === 0) {
+                list.innerHTML = '<div style="text-align: center; opacity: 0.5; padding: 40px;">No hay mediciones registradas</div>';
+                return;
+            }
+            
+            list.innerHTML = measurements.map((m, i) => `
+                <div class="measurement-item">
+                    <div class="measurement-header">
+                        <span>#${i + 1} - ${m.mode.toUpperCase()}</span>
+                        <span style="opacity: 0.7; font-size: 11px;">${m.timestamp}</span>
+                    </div>
+                    <div class="measurement-data">
+                        Hz: ${m.horizontal.toFixed(4)}°<br>
+                        V: ${m.vertical.toFixed(4)}°<br>
+                        Z: ${m.zenith.toFixed(4)}°<br>
+                        Lat: ${m.latitude?.toFixed(6) || 'N/A'}<br>
+                        Lon: ${m.longitude?.toFixed(6) || 'N/A'}<br>
+                        Alt: ${m.altitude?.toFixed(2) || 'N/A'} m<br>
+                        Acc: ±${m.accuracy?.toFixed(1) || 'N/A'} m
+                    </div>
+                </div>
+            `).reverse().join('');
+        }
+
+        // Request permissions and start
+        $('requestPermissions').addEventListener('click', async () => {
+            try {
+                // Request device orientation permission (iOS 13+)
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    const permission = await DeviceOrientationEvent.requestPermission();
+                    if (permission !== 'granted') {
+                        showToast('Permiso de orientación denegado');
+                        return;
+                    }
+                }
+                
+                // Initialize
+                await initCamera();
+                initSensors();
+                permissionPrompt.classList.add('hidden');
+                
+                showToast('🎯 Teodolito digital activado');
+            } catch (error) {
+                showToast('Error: ' + error.message);
+                console.error(error);
+            }
+        });
+
+        // Export measurements
+        function exportMeasurements() {
+            const csv = [
+                ['#', 'Timestamp', 'Mode', 'Hz (°)', 'V (°)', 'Z (°)', 'Lat', 'Lon', 'Alt (m)', 'Acc (m)'],
+                ...measurements.map((m, i) => [
+                    i + 1,
+                    m.timestamp,
+                    m.mode,
+                    m.horizontal.toFixed(4),
+                    m.vertical.toFixed(4),
+                    m.zenith.toFixed(4),
+                    m.latitude?.toFixed(6) || '',
+                    m.longitude?.toFixed(6) || '',
+                    m.altitude?.toFixed(2) || '',
+                    m.accuracy?.toFixed(1) || ''
+                ])
+            ].map(row => row.join(',')).join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `theodolite_measurements_${Date.now()}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showToast('✓ Mediciones exportadas');
+        }
+
+        // Add export button to log
+        const exportBtn = document.createElement('button');
+        exportBtn.textContent = '📥 Exportar CSV';
+        exportBtn.style.cssText = 'width: 100%; padding: 15px; background: linear-gradient(135deg, #00d9ff, #00a8ff); color: #000; border: none; border-radius: 12px; font-weight: 700; margin-top: 20px; cursor: pointer;';
+        exportBtn.addEventListener('click', exportMeasurements);
+        $('measurementsLog').appendChild(exportBtn);
+    </script>
+</body>
+</html>
