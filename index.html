@@ -2,1493 +2,1218 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#000000">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="description" content="Professional Digital Theodolite - Samsung Galaxy S23 Ultra">
-    <title>Digital Theodolite Pro - S23 Ultra</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medición de Desnivel con RTK Profesional</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Samsung Sans', Arial, sans-serif;
-            background: #000; 
-            color: #fff; 
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-            position: relative;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        /* Camera Feed */
-        #cameraFeed {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: 1;
-        }
-
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 2;
-            pointer-events: none;
-        }
-
-        /* Crosshair */
-        .crosshair {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 60px;
-            height: 60px;
-        }
-
-        .crosshair::before,
-        .crosshair::after {
-            content: '';
-            position: absolute;
-            background: #00ff88;
-            box-shadow: 0 0 10px rgba(0,255,136,0.8);
-        }
-
-        .crosshair::before {
-            width: 2px;
-            height: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .crosshair::after {
-            height: 2px;
-            width: 100%;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-
-        .crosshair-circle {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 120px;
-            height: 120px;
-            border: 2px solid #00ff88;
-            border-radius: 50%;
-            box-shadow: 0 0 20px rgba(0,255,136,0.5);
-        }
-
-        /* Level Bubble Indicators */
-        .level-container {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 20px;
-            background: rgba(0,0,0,0.8);
-            padding: 15px 25px;
-            border-radius: 50px;
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .bubble {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .bubble-label {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            opacity: 0.7;
-            font-weight: 700;
-        }
-
-        .bubble-indicator {
-            width: 100px;
-            height: 40px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 20px;
-            position: relative;
-            overflow: hidden;
-            border: 2px solid rgba(255,255,255,0.3);
-        }
-
-        .bubble-ball {
-            width: 30px;
-            height: 30px;
-            background: radial-gradient(circle at 30% 30%, #00ff88, #00cc66);
-            border-radius: 50%;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            transition: all 0.1s ease-out;
-            box-shadow: 0 0 15px rgba(0,255,136,0.6);
-        }
-
-        .level-value {
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            font-weight: 700;
-            color: #00ff88;
-        }
-
-        /* Angle Display */
-        .angle-display {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.9);
-            padding: 20px 30px;
-            border-radius: 24px;
-            backdrop-filter: blur(20px);
-            border: 2px solid rgba(0,217,255,0.4);
-            min-width: 320px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
-        }
-
-        .angle-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .angle-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .angle-label {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            opacity: 0.7;
-            font-weight: 700;
-        }
-
-        .angle-value {
-            font-family: 'Courier New', monospace;
-            font-size: 24px;
-            font-weight: 700;
-            color: #00d9ff;
-            text-align: right;
-            min-width: 120px;
-        }
-
-        .angle-unit {
-            font-size: 14px;
-            opacity: 0.8;
-            margin-left: 5px;
-        }
-
-        /* Controls Panel */
-        .controls {
-            position: fixed;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            pointer-events: all;
-        }
-
-        .control-btn {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: rgba(0,0,0,0.8);
-            border: 2px solid rgba(255,255,255,0.3);
-            backdrop-filter: blur(20px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        }
-
-        .control-btn:active {
-            transform: scale(0.9);
-            background: rgba(0,217,255,0.2);
-            border-color: #00d9ff;
-        }
-
-        .control-btn.active {
-            background: rgba(0,255,136,0.2);
-            border-color: #00ff88;
-        }
-
-        /* Info Panel */
-        .info-panel {
-            position: absolute;
-            top: 100px;
-            left: 20px;
-            background: rgba(0,0,0,0.8);
-            padding: 15px;
-            border-radius: 16px;
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.2);
-            max-width: 220px;
-            font-size: 11px;
-            line-height: 1.6;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-
-        .info-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .info-label {
-            opacity: 0.7;
-            text-transform: uppercase;
-            font-size: 9px;
-            letter-spacing: 0.5px;
-        }
-
-        .info-value {
-            font-family: 'Courier New', monospace;
-            color: #00d9ff;
-            font-weight: 700;
-        }
-
-        /* Height Measurement Panel */
-        .height-panel {
-            position: absolute;
-            bottom: 250px;
-            right: 20px;
-            background: rgba(0,0,0,0.9);
-            padding: 15px;
-            border-radius: 16px;
-            backdrop-filter: blur(20px);
-            border: 2px solid rgba(255,215,0,0.4);
-            min-width: 180px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        }
-
-        .height-title {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 12px;
-            opacity: 0.7;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .height-input-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-
-        .height-input {
-            flex: 1;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: #fff;
-            padding: 8px;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            font-weight: 700;
-            text-align: center;
-        }
-
-        .height-unit {
-            font-size: 12px;
-            opacity: 0.8;
-        }
-
-        .height-result {
-            background: rgba(255,215,0,0.1);
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 10px;
-            border: 1px solid rgba(255,215,0,0.3);
-        }
-
-        .height-result-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 6px;
-        }
-
-        .height-result-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .height-result-label {
-            font-size: 10px;
-            opacity: 0.7;
-        }
-
-        .height-result-value {
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            color: #ffd700;
-            font-weight: 700;
-        }
-
-        .height-calculate-btn {
-            width: 100%;
-            padding: 10px;
-            background: linear-gradient(135deg, #ffd700, #ffaa00);
-            border: none;
-            border-radius: 8px;
-            color: #000;
-            font-weight: 700;
-            font-size: 12px;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: all 0.2s;
-        }
-
-        .height-calculate-btn:active {
-            transform: scale(0.95);
-        }
-
-        .height-method {
-            font-size: 10px;
-            opacity: 0.6;
-            margin-top: 8px;
-            text-align: center;
-            line-height: 1.4;
-        }
-
-        /* Measurement Mode Badge */
-        .mode-badge {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #00d9ff, #00a8ff);
-            color: #000;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 15px rgba(0,217,255,0.4);
-        }
-
-        /* Compass Display */
-        .compass {
-            position: absolute;
-            top: 100px;
-            right: 20px;
-            width: 80px;
-            height: 80px;
-            background: rgba(0,0,0,0.8);
-            border-radius: 50%;
-            border: 2px solid rgba(255,255,255,0.3);
-            backdrop-filter: blur(20px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: 700;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        }
-
-        .compass-needle {
-            position: absolute;
-            width: 2px;
-            height: 30px;
-            background: linear-gradient(to bottom, #ff0055, #00ff88);
-            top: 10px;
-            left: 50%;
-            transform-origin: bottom center;
-            transition: transform 0.3s ease-out;
-            box-shadow: 0 0 10px rgba(255,0,85,0.8);
-        }
-
-        .compass-value {
-            font-family: 'Courier New', monospace;
-            font-size: 16px;
-            color: #00d9ff;
-            margin-top: 35px;
-        }
-
-        /* Zoom Control */
-        .zoom-control {
-            position: absolute;
-            left: 20px;
-            bottom: 140px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .zoom-btn {
-            width: 50px;
-            height: 50px;
-            background: rgba(0,0,0,0.8);
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            cursor: pointer;
-            backdrop-filter: blur(20px);
-            transition: all 0.2s;
-            pointer-events: all;
-        }
-
-        .zoom-btn:active {
-            transform: scale(0.9);
-            background: rgba(0,217,255,0.2);
-        }
-
-        /* GPS Coordinates */
-        .gps-display {
-            position: absolute;
-            bottom: 140px;
-            left: 20px;
-            background: rgba(0,0,0,0.8);
-            padding: 12px 16px;
-            border-radius: 12px;
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.2);
-            font-size: 10px;
-            max-width: 180px;
-        }
-
-        .gps-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 6px;
-            font-family: 'Courier New', monospace;
-        }
-
-        .gps-row:last-child {
-            margin-bottom: 0;
-        }
-
-        /* Status Indicator */
-        .status-indicator {
-            position: absolute;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
-            padding: 8px 20px;
-            border-radius: 20px;
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.2);
-            font-size: 11px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: #00ff88;
-            border-radius: 50%;
-            animation: pulse-dot 2s infinite;
-        }
-
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        /* Main Action Button */
-        .main-action {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #00ff88, #00d968);
-            border: 4px solid rgba(255,255,255,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            cursor: pointer;
-            z-index: 10;
-            pointer-events: all;
-            box-shadow: 0 6px 30px rgba(0,255,136,0.5);
-            transition: all 0.2s;
-        }
-
-        .main-action:active {
-            transform: translateX(-50%) scale(0.9);
-        }
-
-        /* Toast Notifications */
-        .toast {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.8);
-            background: rgba(20,20,30,0.95);
-            color: #fff;
-            padding: 20px 30px;
-            border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.3);
-            font-size: 14px;
-            font-weight: 600;
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 1000;
-            backdrop-filter: blur(30px);
-            box-shadow: 0 15px 50px rgba(0,0,0,0.8);
-            text-align: center;
-            max-width: 80%;
-            pointer-events: none;
-        }
-
-        .toast.show {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-        }
-
-        /* Measurements Log */
-        .measurements-log {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 100;
-            display: none;
-            flex-direction: column;
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             padding: 20px;
-            overflow-y: auto;
-            backdrop-filter: blur(20px);
         }
 
-        .measurements-log.show {
-            display: flex;
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
         }
 
-        .log-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
         }
 
-        .log-title {
-            font-size: 20px;
-            font-weight: 800;
-        }
-
-        .log-close {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 24px;
-        }
-
-        .measurement-item {
-            background: rgba(255,255,255,0.05);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .measurement-header {
-            display: flex;
-            justify-content: space-between;
+        .header h1 {
+            font-size: 28px;
             margin-bottom: 10px;
-            font-weight: 700;
         }
 
-        .measurement-data {
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            line-height: 1.8;
-            color: #00d9ff;
-        }
-
-        /* Camera permission prompt */
-        .permission-prompt {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 20px;
-            text-align: center;
-            padding: 40px;
-        }
-
-        .permission-icon {
-            font-size: 64px;
-        }
-
-        .permission-text {
-            font-size: 18px;
-            font-weight: 600;
-            line-height: 1.6;
-        }
-
-        .permission-btn {
-            padding: 15px 40px;
-            background: linear-gradient(135deg, #00d9ff, #00a8ff);
-            color: #000;
-            border: none;
-            border-radius: 50px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 6px 30px rgba(0,217,255,0.4);
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        /* Calibration Mode */
-        .calibration-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 50;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(10px);
-        }
-
-        .calibration-overlay.show {
-            display: flex;
-        }
-
-        .calibration-content {
-            text-align: center;
-            padding: 40px;
-        }
-
-        .calibration-title {
-            font-size: 24px;
-            font-weight: 800;
-            margin-bottom: 20px;
-        }
-
-        .calibration-instruction {
-            font-size: 16px;
-            line-height: 1.8;
-            margin-bottom: 30px;
+        .header p {
+            font-size: 14px;
             opacity: 0.9;
         }
 
-        .calibration-progress {
-            width: 200px;
-            height: 200px;
-            border: 8px solid rgba(255,255,255,0.2);
-            border-top-color: #00ff88;
-            border-radius: 50%;
-            animation: spin 2s linear infinite;
-            margin: 0 auto 20px;
+        .content {
+            padding: 30px;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .mode-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .mode-btn {
+            padding: 15px;
+            border: 2px solid #667eea;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .rtk-config {
+            background: #f8f9fa;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .rtk-config.show {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        .rtk-config h3 {
+            color: #2a5298;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rtk-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .rtk-status-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ccc;
+        }
+
+        .rtk-status-item.connected {
+            border-left-color: #28a745;
+        }
+
+        .rtk-status-item.fix {
+            border-left-color: #17a2b8;
+        }
+
+        .rtk-status-item.float {
+            border-left-color: #ffc107;
+        }
+
+        .rtk-status-item.error {
+            border-left-color: #dc3545;
+        }
+
+        .rtk-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .rtk-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2a5298;
+        }
+
+        .step {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .step-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2a5298;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .input-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-field label {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .input-field input, .input-field select {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .input-field input:focus, .input-field select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-field input:disabled {
+            background-color: #f0f0f0;
+            cursor: not-allowed;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .btn-rtk {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        }
+
+        .gps-status {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .gps-status.active {
+            border-color: #28a745;
+            background: #f0fff4;
+        }
+
+        .gps-status.rtk-fix {
+            border-color: #17a2b8;
+            background: #e7f9fc;
+        }
+
+        .gps-status.rtk-float {
+            border-color: #ffc107;
+            background: #fff8e1;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ccc;
+        }
+
+        .status-dot.active {
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.rtk-fix {
+            background: #17a2b8;
+            animation: pulse 1s infinite;
+        }
+
+        .status-dot.rtk-float {
+            background: #ffc107;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .results {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 30px;
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .results h3 {
+            color: #2a5298;
+            margin-bottom: 20px;
+            font-size: 22px;
+            text-align: center;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .result-item {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .result-label {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .result-value {
+            font-size: 24px;
+            color: #2a5298;
+            font-weight: bold;
+        }
+
+        .result-unit {
+            font-size: 14px;
+            color: #888;
+            margin-left: 5px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .point-saved {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border: 1px solid #c3e6cb;
+            display: none;
+        }
+
+        .point-saved.show {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        .accuracy-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .accuracy-bar {
+            flex: 1;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .accuracy-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #dc3545, #ffc107, #28a745);
+            transition: width 0.3s;
+        }
+
+        @media (max-width: 768px) {
+            .mode-selector {
+                grid-template-columns: 1fr;
+            }
+            
+            .rtk-status {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Permission Prompt -->
-    <div class="permission-prompt" id="permissionPrompt">
-        <div class="permission-icon">📷</div>
-        <div class="permission-text">
-            Este teodolito digital requiere acceso a:<br><br>
-            • Cámara (para visualización)<br>
-            • Sensores de orientación<br>
-            • GPS de alta precisión<br>
-            • Giroscopio y acelerómetro
-        </div>
-        <button class="permission-btn" id="requestPermissions">Activar Teodolito</button>
-    </div>
-
-    <!-- Camera Feed -->
-    <video id="cameraFeed" autoplay playsinline muted></video>
-
-    <!-- Overlay Elements -->
-    <div class="overlay">
-        <!-- Status Indicator -->
-        <div class="status-indicator" id="statusIndicator">
-            <div class="status-dot"></div>
-            <span id="statusText">Calibrando sensores...</span>
+    <div class="container">
+        <div class="header">
+            <h1>📐 Medición de Desnivel con RTK Profesional</h1>
+            <p>Sistema de posicionamiento de precisión centimétrica con correcciones RTK</p>
         </div>
 
-        <!-- Mode Badge -->
-        <div class="mode-badge" id="modeBadge">HORIZONTAL</div>
+        <div class="content">
+            <!-- Selector de Modo -->
+            <div class="mode-selector">
+                <button class="mode-btn active" onclick="cambiarModo('manual')" id="btnManual">
+                    ⌨️ Entrada Manual
+                </button>
+                <button class="mode-btn" onclick="cambiarModo('gps')" id="btnGPS">
+                    📡 GPS Estándar
+                </button>
+                <button class="mode-btn" onclick="cambiarModo('rtk')" id="btnRTK">
+                    🎯 RTK Profesional
+                </button>
+            </div>
 
-        <!-- Level Indicators -->
-        <div class="level-container">
-            <div class="bubble">
-                <div class="bubble-label">Pitch (X)</div>
-                <div class="bubble-indicator">
-                    <div class="bubble-ball" id="bubblePitch"></div>
+            <!-- Configuración RTK -->
+            <div class="rtk-config" id="rtkConfig">
+                <h3>
+                    <span>🎯</span>
+                    Configuración RTK/NTRIP
+                </h3>
+                
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Servidor NTRIP</label>
+                        <input type="text" id="ntripServer" placeholder="rtk2go.com" value="rtk2go.com">
+                    </div>
+                    <div class="input-field">
+                        <label>Puerto</label>
+                        <input type="number" id="ntripPort" placeholder="2101" value="2101">
+                    </div>
+                    <div class="input-field">
+                        <label>Punto de Montaje</label>
+                        <input type="text" id="ntripMountpoint" placeholder="MYBASE">
+                    </div>
                 </div>
-                <div class="level-value" id="pitchValue">0.0°</div>
-            </div>
-            <div class="bubble">
-                <div class="bubble-label">Roll (Y)</div>
-                <div class="bubble-indicator">
-                    <div class="bubble-ball" id="bubbleRoll"></div>
+
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Usuario</label>
+                        <input type="text" id="ntripUser" placeholder="usuario">
+                    </div>
+                    <div class="input-field">
+                        <label>Contraseña</label>
+                        <input type="password" id="ntripPassword" placeholder="contraseña">
+                    </div>
+                    <div class="input-field">
+                        <label>Tipo de Corrección</label>
+                        <select id="correctionType">
+                            <option value="rtcm3">RTCM 3.x</option>
+                            <option value="rtcm2">RTCM 2.x</option>
+                            <option value="raw">RAW</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="level-value" id="rollValue">0.0°</div>
-            </div>
-        </div>
 
-        <!-- Crosshair -->
-        <div class="crosshair"></div>
-        <div class="crosshair-circle"></div>
+                <button class="btn btn-rtk" onclick="conectarRTK()">
+                    🔗 Conectar a Estación Base RTK
+                </button>
 
-        <!-- Compass -->
-        <div class="compass">
-            <div class="compass-needle" id="compassNeedle"></div>
-            <div class="compass-value" id="compassValue">0°</div>
-        </div>
-
-        <!-- Info Panel -->
-        <div class="info-panel">
-            <div class="info-row">
-                <span class="info-label">Altitud</span>
-                <span class="info-value" id="altitude">-- ft</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Precisión GPS</span>
-                <span class="info-value" id="accuracy">-- ft</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Temperatura</span>
-                <span class="info-value" id="temperature">-- °F</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Batería</span>
-                <span class="info-value" id="battery">--% </span>
-            </div>
-        </div>
-
-        <!-- Height Measurement Panel -->
-        <div class="height-panel">
-            <div class="height-title">📏 Medición de Altura</div>
-            
-            <div class="height-input-row">
-                <input type="number" class="height-input" id="instrumentHeight" 
-                       value="5.5" step="0.1" min="0" max="20">
-                <span class="height-unit">ft</span>
-            </div>
-            <div style="font-size: 9px; opacity: 0.6; margin-bottom: 10px;">
-                Altura del instrumento desde el suelo
-            </div>
-
-            <div class="height-input-row">
-                <input type="number" class="height-input" id="horizontalDistance" 
-                       value="0" step="1" min="0" max="1000" placeholder="Distancia">
-                <span class="height-unit">ft</span>
-            </div>
-            <div style="font-size: 9px; opacity: 0.6; margin-bottom: 10px;">
-                Distancia horizontal al objetivo (opcional)
-            </div>
-
-            <button class="height-calculate-btn" id="calculateHeight">
-                🎯 Calcular Altura
-            </button>
-
-            <div class="height-result" id="heightResult" style="display: none;">
-                <div class="height-result-row">
-                    <span class="height-result-label">Altura Objetivo:</span>
-                    <span class="height-result-value" id="targetHeight">-- ft</span>
-                </div>
-                <div class="height-result-row">
-                    <span class="height-result-label">Diferencia:</span>
-                    <span class="height-result-value" id="heightDifference">-- ft</span>
-                </div>
-                <div class="height-result-row" id="distanceCalcRow" style="display: none;">
-                    <span class="height-result-label">Dist. Calculada:</span>
-                    <span class="height-result-value" id="calculatedDistance">-- ft</span>
+                <!-- Estado RTK -->
+                <div class="rtk-status">
+                    <div class="rtk-status-item" id="rtkConnection">
+                        <div class="rtk-label">Conexión NTRIP</div>
+                        <div class="rtk-value">Desconectado</div>
+                    </div>
+                    <div class="rtk-status-item" id="rtkSolution">
+                        <div class="rtk-label">Estado Solución</div>
+                        <div class="rtk-value">Sin Fix</div>
+                    </div>
+                    <div class="rtk-status-item" id="rtkSatellites">
+                        <div class="rtk-label">Satélites</div>
+                        <div class="rtk-value">0</div>
+                    </div>
+                    <div class="rtk-status-item" id="rtkAccuracy">
+                        <div class="rtk-label">Precisión Horizontal</div>
+                        <div class="rtk-value">N/A</div>
+                    </div>
+                    <div class="rtk-status-item" id="rtkAge">
+                        <div class="rtk-label">Edad Corrección</div>
+                        <div class="rtk-value">N/A</div>
+                    </div>
+                    <div class="rtk-status-item" id="rtkBaseline">
+                        <div class="rtk-label">Línea Base</div>
+                        <div class="rtk-value">N/A</div>
+                    </div>
                 </div>
             </div>
 
-            <div class="height-method">
-                Usa ángulo vertical + distancia<br>
-                o mide dos ángulos (estación-altura)
+            <!-- Alertas -->
+            <div class="alert alert-info" id="gpsAlert" style="display: none;">
+                <strong>ℹ️ Modo GPS Activado:</strong> Permita el acceso a la ubicación cuando se le solicite.
             </div>
-        </div>
 
-        <!-- GPS Display -->
-        <div class="gps-display">
-            <div class="gps-row">
-                <span style="opacity: 0.7;">LAT:</span>
-                <span id="latitude">--.------</span>
+            <div class="alert alert-success" id="rtkAlert" style="display: none;">
+                <strong>🎯 Modo RTK Activado:</strong> Conectándose a estación base NTRIP para correcciones de precisión centimétrica.
             </div>
-            <div class="gps-row">
-                <span style="opacity: 0.7;">LON:</span>
-                <span id="longitude">--.------</span>
+
+            <!-- Estado del GPS/RTK -->
+            <div class="gps-status" id="gpsStatus" style="display: none;">
+                <div class="status-indicator">
+                    <div class="status-dot" id="statusDot"></div>
+                    <strong id="statusText">Estado: Inactivo</strong>
+                </div>
+                <div class="gps-info" id="gpsInfo">Esperando señal...</div>
+                
+                <div class="accuracy-indicator" id="accuracyIndicator" style="display: none;">
+                    <span style="font-size: 12px; font-weight: 600;">Precisión:</span>
+                    <div class="accuracy-bar">
+                        <div class="accuracy-fill" id="accuracyFill"></div>
+                    </div>
+                    <span id="accuracyText" style="font-size: 12px; font-weight: bold;">N/A</span>
+                </div>
             </div>
-            <div class="gps-row">
-                <span style="opacity: 0.7;">ALT:</span>
-                <span id="altitudeGps">-- ft</span>
+
+            <!-- Paso 1: Punto Superior -->
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">1</span>
+                    Punto Superior de la Pendiente
+                </div>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Latitud (°)</label>
+                        <input type="number" step="0.00000001" id="lat1" placeholder="40.71280000">
+                    </div>
+                    <div class="input-field">
+                        <label>Longitud (°)</label>
+                        <input type="number" step="0.00000001" id="lon1" placeholder="-74.00600000">
+                    </div>
+                    <div class="input-field">
+                        <label>Elevación (m)</label>
+                        <input type="number" step="0.001" id="elev1" placeholder="150.500">
+                    </div>
+                </div>
+                <button class="btn btn-secondary" id="btnCapturar1" onclick="capturarPunto(1)" style="display: none;">
+                    📍 Capturar Punto Superior
+                </button>
+                <div class="point-saved" id="saved1">
+                    ✓ Punto superior capturado
+                </div>
             </div>
-        </div>
 
-        <!-- Angle Display -->
-        <div class="angle-display">
-            <div class="angle-row">
-                <span class="angle-label">Horizontal (Hz)</span>
-                <span class="angle-value">
-                    <span id="horizontalAngle">0.0000</span><span class="angle-unit">°</span>
-                </span>
+            <!-- Paso 2: Punto Inferior -->
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">2</span>
+                    Punto Inferior de la Pendiente
+                </div>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Latitud (°)</label>
+                        <input type="number" step="0.00000001" id="lat2" placeholder="40.71250000">
+                    </div>
+                    <div class="input-field">
+                        <label>Longitud (°)</label>
+                        <input type="number" step="0.00000001" id="lon2" placeholder="-74.00550000">
+                    </div>
+                    <div class="input-field">
+                        <label>Elevación (m)</label>
+                        <input type="number" step="0.001" id="elev2" placeholder="145.200">
+                    </div>
+                </div>
+                <button class="btn btn-secondary" id="btnCapturar2" onclick="capturarPunto(2)" style="display: none;">
+                    📍 Capturar Punto Inferior
+                </button>
+                <div class="point-saved" id="saved2">
+                    ✓ Punto inferior capturado
+                </div>
             </div>
-            <div class="angle-row">
-                <span class="angle-label">Vertical (V)</span>
-                <span class="angle-value">
-                    <span id="verticalAngle">0.0000</span><span class="angle-unit">°</span>
-                </span>
+
+            <!-- Paso 3: Cálculo -->
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">3</span>
+                    Cálculo de Parámetros
+                </div>
+                <button class="btn" onclick="calcularDesnivel()">
+                    🧮 Calcular Desnivel y Pendiente
+                </button>
             </div>
-            <div class="angle-row">
-                <span class="angle-label">Zenith (Z)</span>
-                <span class="angle-value">
-                    <span id="zenithAngle">90.0000</span><span class="angle-unit">°</span>
-                </span>
+
+            <!-- Resultados -->
+            <div class="results" id="results">
+                <h3>📊 Resultados del Cálculo</h3>
+                <div class="result-grid">
+                    <div class="result-item">
+                        <div class="result-label">Azimut</div>
+                        <div class="result-value" id="azimut">0<span class="result-unit">°</span></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Distancia Horizontal</div>
+                        <div class="result-value" id="distancia">0<span class="result-unit">m</span></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Desnivel</div>
+                        <div class="result-value" id="desnivel">0<span class="result-unit">m</span></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Pendiente</div>
+                        <div class="result-value" id="pendiente">0<span class="result-unit">%</span></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Ángulo Pendiente</div>
+                        <div class="result-value" id="angulo">0<span class="result-unit">°</span></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Distancia Real</div>
+                        <div class="result-value" id="distReal">0<span class="result-unit">m</span></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Precisión Medición</div>
+                        <div class="result-value" id="precisionMed">N/A</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Método Usado</div>
+                        <div class="result-value" id="metodoUsado" style="font-size: 16px;">-</div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Control Buttons -->
-    <div class="controls">
-        <div class="control-btn" id="lockBtn" title="Bloquear ángulo">🔒</div>
-        <div class="control-btn" id="zeroBtn" title="Cero horizontal">⊕</div>
-        <div class="control-btn" id="modeBtn" title="Cambiar modo">⟲</div>
-        <div class="control-btn" id="historyBtn" title="Ver mediciones">📋</div>
-    </div>
-
-    <!-- Zoom Controls -->
-    <div class="zoom-control">
-        <div class="zoom-btn" id="zoomIn">+</div>
-        <div class="zoom-btn" id="zoomOut">−</div>
-    </div>
-
-    <!-- Main Capture Button -->
-    <div class="main-action" id="captureBtn">📍</div>
-
-    <!-- Toast Notification -->
-    <div class="toast" id="toast"></div>
-
-    <!-- Measurements Log -->
-    <div class="measurements-log" id="measurementsLog">
-        <div class="log-header">
-            <div class="log-title">📊 Registro de Mediciones</div>
-            <div class="log-close" id="closeLog">×</div>
-        </div>
-        <div id="measurementsList"></div>
-    </div>
-
-    <!-- Calibration Overlay -->
-    <div class="calibration-overlay" id="calibrationOverlay">
-        <div class="calibration-content">
-            <div class="calibration-title">Calibrando Sensores</div>
-            <div class="calibration-instruction">
-                Mantenga el dispositivo quieto en posición horizontal<br>
-                para calibrar el acelerómetro y giroscopio
-            </div>
-            <div class="calibration-progress"></div>
-            <div id="calibrationStatus">Iniciando...</div>
         </div>
     </div>
 
     <script>
-        // Global state
-        let stream = null;
-        let measurements = [];
-        let isLocked = false;
-        let horizontalZero = 0;
-        let currentMode = 'horizontal'; // horizontal, vertical, slope
-        let zoomLevel = 1;
-        let calibrationData = { pitch: [], roll: [], heading: [] };
-        let isCalibrated = false;
-
-        // Height measurement state
-        let heightMeasurements = {
-            point1: null, // First angle measurement
-            point2: null  // Second angle measurement (for station-height method)
+        // Variables globales
+        let modoActual = 'manual';
+        let watchId = null;
+        let currentPosition = null;
+        let rtkConnected = false;
+        let rtkWebSocket = null;
+        let rtkSolutionType = 'NONE'; // NONE, SINGLE, DGPS, FLOAT, FIX
+        let rtkData = {
+            satellites: 0,
+            horizontalAccuracy: null,
+            verticalAccuracy: null,
+            correctionAge: null,
+            baseline: null
         };
 
-        // Unit conversion functions
-        function metersToFeet(meters) {
-            return meters * 3.28084;
-        }
-
-        function feetToMeters(feet) {
-            return feet / 3.28084;
-        }
-
-        function celsiusToFahrenheit(celsius) {
-            return (celsius * 9/5) + 32;
-        }
-
-        function formatImperialHeight(feet) {
-            const wholeFeet = Math.floor(feet);
-            const inches = (feet - wholeFeet) * 12;
-            const wholeInches = Math.floor(inches);
-            const fractionInches = inches - wholeInches;
-            
-            if (wholeInches === 0 && fractionInches < 0.1) {
-                return `${wholeFeet}'`;
-            } else if (fractionInches < 0.1) {
-                return `${wholeFeet}' ${wholeInches}"`;
-            } else {
-                return `${wholeFeet}' ${inches.toFixed(1)}"`;
-            }
-        }
-
-        // Sensor data
-        let sensorData = {
-            alpha: 0,  // compass/heading (0-360)
-            beta: 0,   // pitch (front-back tilt) (-180 to 180)
-            gamma: 0,  // roll (left-right tilt) (-90 to 90)
-            latitude: null,
-            longitude: null,
-            altitude: null,
-            accuracy: null,
-            speed: null,
-            heading: null
-        };
-
-        // DOM elements
-        const $ = id => document.getElementById(id);
-        const cameraFeed = $('cameraFeed');
-        const permissionPrompt = $('permissionPrompt');
-        const calibrationOverlay = $('calibrationOverlay');
-
-        // Toast notification
-        function showToast(message, duration = 3000) {
-            const toast = $('toast');
-            toast.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), duration);
-            
-            if (navigator.vibrate) navigator.vibrate(50);
-        }
-
-        // Initialize camera
-        async function initCamera() {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: 'environment',
-                        width: { ideal: 3840 },
-                        height: { ideal: 2160 }
-                    }
-                });
-                cameraFeed.srcObject = stream;
-                
-                // Apply zoom
-                const track = stream.getVideoTracks()[0];
-                const capabilities = track.getCapabilities();
-                if (capabilities.zoom) {
-                    await track.applyConstraints({
-                        advanced: [{ zoom: zoomLevel }]
-                    });
-                }
-            } catch (error) {
-                showToast('Error: No se puede acceder a la cámara');
-                console.error(error);
-            }
-        }
-
-        // Initialize sensors
-        function initSensors() {
-            // Device orientation (compass, pitch, roll)
-            if (window.DeviceOrientationEvent) {
-                window.addEventListener('deviceorientation', handleOrientation);
+        // Sistema RTK simulado para demostración
+        class RTKSystem {
+            constructor() {
+                this.connected = false;
+                this.solutionType = 'NONE';
+                this.corrections = null;
+                this.basePosition = null;
             }
 
-            // GPS
-            if (navigator.geolocation) {
-                navigator.geolocation.watchPosition(
-                    handleGPS,
-                    error => console.error('GPS error:', error),
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 0
-                    }
-                );
-            }
-
-            // Battery
-            if (navigator.getBattery) {
-                navigator.getBattery().then(battery => {
-                    updateBattery(battery);
-                    battery.addEventListener('levelchange', () => updateBattery(battery));
-                });
-            }
-        }
-
-        function handleOrientation(event) {
-            // Raw sensor values
-            sensorData.alpha = event.alpha || 0;  // 0-360 compass
-            sensorData.beta = event.beta || 0;    // -180 to 180 pitch
-            sensorData.gamma = event.gamma || 0;  // -90 to 90 roll
-
-            // Apply calibration offsets if calibrated
-            if (isCalibrated) {
-                // Normalize and update displays
-                updateLevelBubbles();
-                updateCompass();
-                updateAngles();
-            } else if (!calibrationOverlay.classList.contains('show')) {
-                // Start calibration
-                startCalibration();
-            }
-        }
-
-        function handleGPS(position) {
-            sensorData.latitude = position.coords.latitude;
-            sensorData.longitude = position.coords.longitude;
-            sensorData.altitude = position.coords.altitude;
-            sensorData.accuracy = position.coords.accuracy;
-            sensorData.speed = position.coords.speed;
-            sensorData.heading = position.coords.heading;
-
-            // Convert to imperial and update GPS display
-            const altitudeFt = sensorData.altitude ? metersToFeet(sensorData.altitude) : null;
-            const accuracyFt = sensorData.accuracy ? metersToFeet(sensorData.accuracy) : null;
-
-            $('latitude').textContent = sensorData.latitude?.toFixed(6) || '--';
-            $('longitude').textContent = sensorData.longitude?.toFixed(6) || '--';
-            $('altitudeGps').textContent = altitudeFt ? altitudeFt.toFixed(1) + ' ft' : '--';
-            $('altitude').textContent = altitudeFt ? altitudeFt.toFixed(1) + ' ft' : '--';
-            $('accuracy').textContent = accuracyFt ? '±' + accuracyFt.toFixed(1) + ' ft' : '--';
-
-            // Update status
-            if (accuracyFt && accuracyFt < 33) { // ~10m
-                $('statusText').textContent = 'GPS: Señal excelente';
-            } else if (accuracyFt && accuracyFt < 66) { // ~20m
-                $('statusText').textContent = 'GPS: Señal buena';
-            } else {
-                $('statusText').textContent = 'GPS: Señal regular';
-            }
-        }
-
-        function updateBattery(battery) {
-            const level = Math.round(battery.level * 100);
-            $('battery').textContent = level + '%';
-        }
-
-        // Calibration
-        function startCalibration() {
-            calibrationOverlay.classList.add('show');
-            calibrationData = { pitch: [], roll: [], heading: [] };
-            
-            $('calibrationStatus').textContent = 'Recopilando datos... 0/50';
-            
-            const calibrationInterval = setInterval(() => {
-                if (calibrationData.pitch.length < 50) {
-                    calibrationData.pitch.push(sensorData.beta);
-                    calibrationData.roll.push(sensorData.gamma);
-                    calibrationData.heading.push(sensorData.alpha);
-                    $('calibrationStatus').textContent = `Recopilando datos... ${calibrationData.pitch.length}/50`;
-                } else {
-                    clearInterval(calibrationInterval);
-                    finishCalibration();
-                }
-            }, 100);
-        }
-
-        function finishCalibration() {
-            // Calculate average offsets
-            const avgPitch = calibrationData.pitch.reduce((a, b) => a + b) / calibrationData.pitch.length;
-            const avgRoll = calibrationData.roll.reduce((a, b) => a + b) / calibrationData.roll.length;
-            
-            // Store offsets
-            sensorData.pitchOffset = avgPitch;
-            sensorData.rollOffset = avgRoll;
-            
-            isCalibrated = true;
-            calibrationOverlay.classList.remove('show');
-            $('statusText').textContent = 'Sistema calibrado';
-            showToast('✓ Calibración completada');
-        }
-
-        // Update displays
-        function updateLevelBubbles() {
-            const pitch = sensorData.beta - (sensorData.pitchOffset || 0);
-            const roll = sensorData.gamma - (sensorData.rollOffset || 0);
-            
-            // Clamp values
-            const pitchClamped = Math.max(-45, Math.min(45, pitch));
-            const rollClamped = Math.max(-45, Math.min(45, roll));
-            
-            // Update bubble positions (centered at 0, moves ±35px max)
-            const pitchOffset = (pitchClamped / 45) * 35;
-            const rollOffset = (rollClamped / 45) * 35;
-            
-            $('bubblePitch').style.transform = `translate(-50%, calc(-50% + ${pitchOffset}px))`;
-            $('bubbleRoll').style.transform = `translate(calc(-50% + ${rollOffset}px), -50%)`;
-            
-            $('pitchValue').textContent = pitch.toFixed(1) + '°';
-            $('rollValue').textContent = roll.toFixed(1) + '°';
-            
-            // Change color if level
-            if (Math.abs(pitch) < 0.5 && Math.abs(roll) < 0.5) {
-                $('bubblePitch').style.background = 'radial-gradient(circle at 30% 30%, #00ff88, #00cc66)';
-                $('bubbleRoll').style.background = 'radial-gradient(circle at 30% 30%, #00ff88, #00cc66)';
-            } else {
-                $('bubblePitch').style.background = 'radial-gradient(circle at 30% 30%, #ffd700, #ffaa00)';
-                $('bubbleRoll').style.background = 'radial-gradient(circle at 30% 30%, #ffd700, #ffaa00)';
-            }
-        }
-
-        function updateCompass() {
-            let heading = sensorData.alpha;
-            
-            // Adjust for device heading if available
-            if (sensorData.heading !== null) {
-                heading = sensorData.heading;
-            }
-            
-            $('compassNeedle').style.transform = `translateX(-50%) rotate(${heading}deg)`;
-            $('compassValue').textContent = Math.round(heading) + '°';
-        }
-
-        function updateAngles() {
-            // Calculate angles
-            let horizontalAngle = sensorData.alpha - horizontalZero;
-            if (horizontalAngle < 0) horizontalAngle += 360;
-            if (horizontalAngle > 360) horizontalAngle -= 360;
-            
-            let verticalAngle = sensorData.beta - (sensorData.pitchOffset || 0);
-            let zenithAngle = 90 - verticalAngle;
-            
-            // Update displays with high precision
-            $('horizontalAngle').textContent = horizontalAngle.toFixed(4);
-            $('verticalAngle').textContent = verticalAngle.toFixed(4);
-            $('zenithAngle').textContent = zenithAngle.toFixed(4);
-        }
-
-        // Zoom controls
-        async function updateZoom(delta) {
-            if (!stream) return;
-            
-            const track = stream.getVideoTracks()[0];
-            const capabilities = track.getCapabilities();
-            
-            if (capabilities.zoom) {
-                zoomLevel = Math.max(1, Math.min(capabilities.zoom.max, zoomLevel + delta));
-                await track.applyConstraints({
-                    advanced: [{ zoom: zoomLevel }]
-                });
-                showToast(`Zoom: ${zoomLevel.toFixed(1)}x`);
-            } else {
-                showToast('Zoom no soportado en este dispositivo');
-            }
-        }
-
-        $('zoomIn').addEventListener('click', () => updateZoom(0.5));
-        $('zoomOut').addEventListener('click', () => updateZoom(-0.5));
-
-        // Control buttons
-        $('lockBtn').addEventListener('click', () => {
-            isLocked = !isLocked;
-            $('lockBtn').classList.toggle('active');
-            showToast(isLocked ? '🔒 Ángulo bloqueado' : '🔓 Ángulo desbloqueado');
-        });
-
-        $('zeroBtn').addEventListener('click', () => {
-            horizontalZero = sensorData.alpha;
-            showToast('⊕ Cero horizontal establecido');
-        });
-
-        $('modeBtn').addEventListener('click', () => {
-            const modes = ['horizontal', 'vertical', 'slope'];
-            const currentIndex = modes.indexOf(currentMode);
-            currentMode = modes[(currentIndex + 1) % modes.length];
-            $('modeBadge').textContent = currentMode.toUpperCase();
-            showToast(`Modo: ${currentMode}`);
-        });
-
-        $('historyBtn').addEventListener('click', () => {
-            $('measurementsLog').classList.add('show');
-            renderMeasurements();
-        });
-
-        $('closeLog').addEventListener('click', () => {
-            $('measurementsLog').classList.remove('show');
-        });
-
-        // Height calculation
-        $('calculateHeight').addEventListener('click', () => {
-            calculateHeight();
-        });
-
-        function calculateHeight() {
-            const instrumentHeightFt = parseFloat($('instrumentHeight').value) || 5.5;
-            const horizontalDistanceFt = parseFloat($('horizontalDistance').value) || 0;
-            const verticalAngle = sensorData.beta - (sensorData.pitchOffset || 0);
-            
-            // Convert to radians
-            const angleRad = verticalAngle * (Math.PI / 180);
-            
-            let targetHeight, heightDifference, calculatedDistance;
-            
-            if (horizontalDistanceFt > 0) {
-                // Method 1: Known horizontal distance
-                // Height difference = distance × tan(angle)
-                heightDifference = horizontalDistanceFt * Math.tan(angleRad);
-                targetHeight = instrumentHeightFt + heightDifference;
-                
-                $('heightResult').style.display = 'block';
-                $('targetHeight').textContent = formatImperialHeight(targetHeight);
-                $('heightDifference').textContent = (heightDifference >= 0 ? '+' : '') + formatImperialHeight(heightDifference);
-                $('distanceCalcRow').style.display = 'none';
-                
-                showToast(`✓ Altura: ${formatImperialHeight(targetHeight)}`);
-            } else {
-                // Method 2: Two-angle method (requires two measurements)
-                if (!heightMeasurements.point1) {
-                    // Store first measurement
-                    heightMeasurements.point1 = {
-                        angle: verticalAngle,
-                        instrumentHeight: instrumentHeightFt
+            async connect(server, port, mountpoint, user, password) {
+                try {
+                    console.log(`Conectando a ${server}:${port}/${mountpoint}`);
+                    
+                    // Simulación de conexión NTRIP
+                    await this.simulateConnection();
+                    
+                    this.connected = true;
+                    this.startCorrectionStream();
+                    
+                    return {
+                        success: true,
+                        message: 'Conectado a estación base RTK'
                     };
-                    showToast('📍 Punto 1 guardado. Muévete y mide de nuevo.');
-                } else {
-                    // Calculate using two points
-                    // This requires GPS distance between two stations
-                    if (sensorData.latitude && sensorData.longitude && heightMeasurements.point1.latitude) {
-                        const stationDistance = calculateGPSDistance(
-                            heightMeasurements.point1.latitude,
-                            heightMeasurements.point1.longitude,
-                            sensorData.latitude,
-                            sensorData.longitude
-                        );
-                        
-                        const stationDistanceFt = metersToFeet(stationDistance);
-                        
-                        // Using trigonometry with two stations
-                        const angle1Rad = heightMeasurements.point1.angle * (Math.PI / 180);
-                        const angle2Rad = verticalAngle * (Math.PI / 180);
-                        
-                        // Calculate target height using surveying formulas
-                        const h1 = heightMeasurements.point1.instrumentHeight;
-                        const h2 = instrumentHeightFt;
-                        
-                        // Distance from station 1 to target
-                        const d1 = stationDistanceFt * Math.sin(angle2Rad) / Math.sin(angle2Rad - angle1Rad);
-                        
-                        heightDifference = d1 * Math.tan(angle1Rad);
-                        targetHeight = h1 + heightDifference;
-                        
-                        $('heightResult').style.display = 'block';
-                        $('targetHeight').textContent = formatImperialHeight(targetHeight);
-                        $('heightDifference').textContent = (heightDifference >= 0 ? '+' : '') + formatImperialHeight(heightDifference);
-                        $('distanceCalcRow').style.display = 'block';
-                        $('calculatedDistance').textContent = formatImperialHeight(d1);
-                        
-                        showToast(`✓ Altura calculada: ${formatImperialHeight(targetHeight)}`);
-                        
-                        // Reset for next measurement
-                        heightMeasurements.point1 = null;
-                    } else {
-                        showToast('⚠️ Ingresa distancia horizontal o activa GPS');
-                        heightMeasurements.point1 = null;
-                    }
+                } catch (error) {
+                    return {
+                        success: false,
+                        message: 'Error al conectar: ' + error.message
+                    };
                 }
             }
-            
-            // Store GPS coordinates with first point
-            if (heightMeasurements.point1 && !heightMeasurements.point1.latitude) {
-                heightMeasurements.point1.latitude = sensorData.latitude;
-                heightMeasurements.point1.longitude = sensorData.longitude;
+
+            simulateConnection() {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve();
+                    }, 2000);
+                });
+            }
+
+            startCorrectionStream() {
+                // Simula la recepción de correcciones RTCM
+                setInterval(() => {
+                    if (this.connected && currentPosition) {
+                        this.processCorrections();
+                    }
+                }, 1000);
+            }
+
+            processCorrections() {
+                // Simula el procesamiento de correcciones RTK
+                const random = Math.random();
+                
+                if (random > 0.7) {
+                    this.solutionType = 'FIX';
+                    rtkData.horizontalAccuracy = 0.008 + Math.random() * 0.007; // 0.8-1.5 cm
+                    rtkData.verticalAccuracy = 0.015 + Math.random() * 0.015; // 1.5-3 cm
+                } else if (random > 0.3) {
+                    this.solutionType = 'FLOAT';
+                    rtkData.horizontalAccuracy = 0.05 + Math.random() * 0.15; // 5-20 cm
+                    rtkData.verticalAccuracy = 0.10 + Math.random() * 0.20; // 10-30 cm
+                } else {
+                    this.solutionType = 'DGPS';
+                    rtkData.horizontalAccuracy = 0.30 + Math.random() * 0.70; // 30-100 cm
+                    rtkData.verticalAccuracy = 0.50 + Math.random() * 1.00; // 50-150 cm
+                }
+
+                rtkData.satellites = 12 + Math.floor(Math.random() * 8); // 12-19 satélites
+                rtkData.correctionAge = 0.5 + Math.random() * 2.5; // 0.5-3 segundos
+                rtkData.baseline = 2.5 + Math.random() * 12.5; // 2.5-15 km
+
+                rtkSolutionType = this.solutionType;
+                actualizarEstadoRTK();
+            }
+
+            applyCorrections(rawPosition) {
+                if (!this.connected || this.solutionType === 'NONE') {
+                    return rawPosition;
+                }
+
+                // Simula la aplicación de correcciones RTK
+                const correctedPosition = { ...rawPosition };
+                
+                // Aplica pequeñas correcciones basadas en el tipo de solución
+                const latCorrection = (Math.random() - 0.5) * 0.00001;
+                const lonCorrection = (Math.random() - 0.5) * 0.00001;
+                const altCorrection = (Math.random() - 0.5) * 0.1;
+
+                correctedPosition.coords = {
+                    ...rawPosition.coords,
+                    latitude: rawPosition.coords.latitude + latCorrection,
+                    longitude: rawPosition.coords.longitude + lonCorrection,
+                    altitude: (rawPosition.coords.altitude || 0) + altCorrection,
+                    accuracy: rtkData.horizontalAccuracy,
+                    altitudeAccuracy: rtkData.verticalAccuracy
+                };
+
+                return correctedPosition;
+            }
+
+            disconnect() {
+                this.connected = false;
+                this.solutionType = 'NONE';
+                rtkConnected = false;
             }
         }
 
-        // Calculate GPS distance using Haversine formula
-        function calculateGPSDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371000; // Earth radius in meters
-            const toRad = x => x * Math.PI / 180;
+        const rtkSystem = new RTKSystem();
+
+        function cambiarModo(modo) {
+            modoActual = modo;
             
-            const dLat = toRad(lat2 - lat1);
-            const dLon = toRad(lon2 - lon1);
+            // Actualizar botones
+            document.getElementById('btnManual').classList.remove('active');
+            document.getElementById('btnGPS').classList.remove('active');
+            document.getElementById('btnRTK').classList.remove('active');
             
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            // Ocultar todos los elementos específicos
+            document.getElementById('gpsAlert').style.display = 'none';
+            document.getElementById('rtkAlert').style.display = 'none';
+            document.getElementById('rtkConfig').classList.remove('show');
+            document.getElementById('gpsStatus').style.display = 'none';
+            document.getElementById('btnCapturar1').style.display = 'none';
+            document.getElementById('btnCapturar2').style.display = 'none';
             
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
+            if (modo === 'manual') {
+                document.getElementById('btnManual').classList.add('active');
+                habilitarCampos(true);
+                detenerGPS();
+            } else if (modo === 'gps') {
+                document.getElementById('btnGPS').classList.add('active');
+                document.getElementById('gpsAlert').style.display = 'block';
+                document.getElementById('gpsStatus').style.display = 'block';
+                document.getElementById('btnCapturar1').style.display = 'block';
+                document.getElementById('btnCapturar2').style.display = 'block';
+                habilitarCampos(false);
+                iniciarGPS();
+            } else if (modo === 'rtk') {
+                document.getElementById('btnRTK').classList.add('active');
+                document.getElementById('rtkAlert').style.display = 'block';
+                document.getElementById('rtkConfig').classList.add('show');
+                document.getElementById('gpsStatus').style.display = 'block';
+                document.getElementById('btnCapturar1').style.display = 'block';
+                document.getElementById('btnCapturar2').style.display = 'block';
+                habilitarCampos(false);
+            }
         }
 
-        // Capture measurement
-        $('captureBtn').addEventListener('click', () => {
-            const instrumentHeightFt = parseFloat($('instrumentHeight').value) || 5.5;
-            const horizontalDistanceFt = parseFloat($('horizontalDistance').value) || 0;
-            
-            const measurement = {
-                timestamp: new Date().toLocaleString(),
-                mode: currentMode,
-                horizontal: (sensorData.alpha - horizontalZero + 360) % 360,
-                vertical: sensorData.beta - (sensorData.pitchOffset || 0),
-                zenith: 90 - (sensorData.beta - (sensorData.pitchOffset || 0)),
-                latitude: sensorData.latitude,
-                longitude: sensorData.longitude,
-                altitude: sensorData.altitude ? metersToFeet(sensorData.altitude) : null,
-                accuracy: sensorData.accuracy ? metersToFeet(sensorData.accuracy) : null,
-                instrumentHeight: instrumentHeightFt,
-                horizontalDistance: horizontalDistanceFt
-            };
-            
-            // Calculate target height if distance provided
-            if (horizontalDistanceFt > 0) {
-                const angleRad = measurement.vertical * (Math.PI / 180);
-                const heightDiff = horizontalDistanceFt * Math.tan(angleRad);
-                measurement.targetHeight = instrumentHeightFt + heightDiff;
-                measurement.heightDifference = heightDiff;
-            }
-            
-            measurements.push(measurement);
-            showToast(`✓ Medición ${measurements.length} capturada`);
-            
-            if (navigator.vibrate) navigator.vibrate([50, 50, 100]);
-        });
+        function habilitarCampos(habilitar) {
+            const campos = ['lat1', 'lon1', 'elev1', 'lat2', 'lon2', 'elev2'];
+            campos.forEach(id => {
+                document.getElementById(id).disabled = !habilitar;
+            });
+        }
 
-        function renderMeasurements() {
-            const list = $('measurementsList');
-            if (measurements.length === 0) {
-                list.innerHTML = '<div style="text-align: center; opacity: 0.5; padding: 40px;">No hay mediciones registradas</div>';
+        function detenerGPS() {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+            if (rtkSystem.connected) {
+                rtkSystem.disconnect();
+            }
+        }
+
+        function iniciarGPS() {
+            if (!navigator.geolocation) {
+                actualizarEstadoGPS('error', 'GPS no disponible', 'Su dispositivo no soporta geolocalización');
                 return;
             }
-            
-            list.innerHTML = measurements.map((m, i) => `
-                <div class="measurement-item">
-                    <div class="measurement-header">
-                        <span>#${i + 1} - ${m.mode.toUpperCase()}</span>
-                        <span style="opacity: 0.7; font-size: 11px;">${m.timestamp}</span>
-                    </div>
-                    <div class="measurement-data">
-                        Hz: ${m.horizontal.toFixed(4)}°<br>
-                        V: ${m.vertical.toFixed(4)}°<br>
-                        Z: ${m.zenith.toFixed(4)}°<br>
-                        Lat: ${m.latitude?.toFixed(6) || 'N/A'}<br>
-                        Lon: ${m.longitude?.toFixed(6) || 'N/A'}<br>
-                        Alt: ${m.altitude?.toFixed(2) || 'N/A'} ft<br>
-                        Acc: ±${m.accuracy?.toFixed(1) || 'N/A'} ft<br>
-                        Inst. Height: ${m.instrumentHeight?.toFixed(2) || 'N/A'} ft
-                        ${m.horizontalDistance ? `<br>Horiz. Dist: ${m.horizontalDistance.toFixed(2)} ft` : ''}
-                        ${m.targetHeight ? `<br><strong>Target Height: ${formatImperialHeight(m.targetHeight)}</strong>` : ''}
-                        ${m.heightDifference ? `<br>Height Diff: ${(m.heightDifference >= 0 ? '+' : '')}${formatImperialHeight(m.heightDifference)}` : ''}
-                    </div>
-                </div>
-            `).reverse().join('');
+
+            actualizarEstadoGPS('buscando', 'Buscando señal GPS...', 'Iniciando búsqueda de satélites...');
+
+            const opciones = {
+                enableHighAccuracy: true,
+                timeout: 30000,
+                maximumAge: 0
+            };
+
+            watchId = navigator.geolocation.watchPosition(
+                posicionExitosa,
+                errorGPS,
+                opciones
+            );
         }
 
-        // Request permissions and start
-        $('requestPermissions').addEventListener('click', async () => {
-            try {
-                // Request device orientation permission (iOS 13+)
-                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                    const permission = await DeviceOrientationEvent.requestPermission();
-                    if (permission !== 'granted') {
-                        showToast('Permiso de orientación denegado');
-                        return;
-                    }
-                }
-                
-                // Initialize
-                await initCamera();
-                initSensors();
-                permissionPrompt.classList.add('hidden');
-                
-                showToast('🎯 Teodolito digital activado');
-            } catch (error) {
-                showToast('Error: ' + error.message);
-                console.error(error);
+        async function conectarRTK() {
+            const server = document.getElementById('ntripServer').value;
+            const port = document.getElementById('ntripPort').value;
+            const mountpoint = document.getElementById('ntripMountpoint').value;
+            const user = document.getElementById('ntripUser').value;
+            const password = document.getElementById('ntripPassword').value;
+
+            if (!server || !port || !mountpoint) {
+                alert('Complete todos los campos de configuración NTRIP');
+                return;
             }
-        });
 
-        // Export measurements
-        function exportMeasurements() {
-            const csv = [
-                ['#', 'Timestamp', 'Mode', 'Hz (°)', 'V (°)', 'Z (°)', 'Lat', 'Lon', 'Alt (ft)', 'Acc (ft)', 'Inst Height (ft)', 'Horiz Dist (ft)', 'Target Height (ft)', 'Height Diff (ft)'],
-                ...measurements.map((m, i) => [
-                    i + 1,
-                    m.timestamp,
-                    m.mode,
-                    m.horizontal.toFixed(4),
-                    m.vertical.toFixed(4),
-                    m.zenith.toFixed(4),
-                    m.latitude?.toFixed(6) || '',
-                    m.longitude?.toFixed(6) || '',
-                    m.altitude?.toFixed(2) || '',
-                    m.accuracy?.toFixed(1) || '',
-                    m.instrumentHeight?.toFixed(2) || '',
-                    m.horizontalDistance?.toFixed(2) || '',
-                    m.targetHeight?.toFixed(2) || '',
-                    m.heightDifference?.toFixed(2) || ''
-                ])
-            ].map(row => row.join(',')).join('\n');
+            actualizarEstadoRTK('connecting');
             
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `theodolite_measurements_${Date.now()}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
+            const result = await rtkSystem.connect(server, port, mountpoint, user, password);
             
-            showToast('✓ Mediciones exportadas');
+            if (result.success) {
+                rtkConnected = true;
+                alert('✓ Conectado a estación base RTK\nEsperando solución RTK Fix...');
+                iniciarGPS();
+            } else {
+                alert('✗ Error de conexión: ' + result.message);
+                actualizarEstadoRTK('error');
+            }
         }
 
-        // Add export button to log
-        const exportBtn = document.createElement('button');
-        exportBtn.textContent = '📥 Exportar CSV';
-        exportBtn.style.cssText = 'width: 100%; padding: 15px; background: linear-gradient(135deg, #00d9ff, #00a8ff); color: #000; border: none; border-radius: 12px; font-weight: 700; margin-top: 20px; cursor: pointer;';
-        exportBtn.addEventListener('click', exportMeasurements);
-        $('measurementsLog').appendChild(exportBtn);
+        function actualizarEstadoRTK(estado = null) {
+            if (estado === 'connecting') {
+                document.getElementById('rtkConnection').querySelector('.rtk-value').textContent = 'Conectando...';
+                return;
+            }
+
+            if (estado === 'error') {
+                document.getElementById('rtkConnection').querySelector('.rtk-value').textContent = 'Error';
+                document.getElementById('rtkConnection').classList.remove('connected');
+                document.getElementById('rtkConnection').classList.add('error');
+                return;
+            }
+
+            // Actualizar estado de conexión
+            if (rtkSystem.connected) {
+                document.getElementById('rtkConnection').querySelector('.rtk-value').textContent = 'Conectado';
+                document.getElementById('rtkConnection').classList.add('connected');
+                document.getElementById('rtkConnection').classList.remove('error');
+            }
+
+            // Actualizar tipo de solución
+            const solutionElement = document.getElementById('rtkSolution');
+            solutionElement.querySelector('.rtk-value').textContent = rtkSolutionType;
+            solutionElement.classList.remove('fix', 'float', 'connected', 'error');
+            
+            if (rtkSolutionType === 'FIX') {
+                solutionElement.classList.add('fix');
+            } else if (rtkSolutionType === 'FLOAT') {
+                solutionElement.classList.add('float');
+            } else if (rtkSolutionType === 'DGPS') {
+                solutionElement.classList.add('connected');
+            }
+
+            // Actualizar satélites
+            document.getElementById('rtkSatellites').querySelector('.rtk-value').textContent = rtkData.satellites;
+
+            // Actualizar precisión
+            if (rtkData.horizontalAccuracy !== null) {
+                const accValue = (rtkData.horizontalAccuracy * 100).toFixed(1);
+                document.getElementById('rtkAccuracy').querySelector('.rtk-value').textContent = accValue + ' cm';
+            }
+
+            // Actualizar edad de corrección
+            if (rtkData.correctionAge !== null) {
+                document.getElementById('rtkAge').querySelector('.rtk-value').textContent = rtkData.correctionAge.toFixed(1) + ' s';
+            }
+
+            // Actualizar línea base
+            if (rtkData.baseline !== null) {
+                document.getElementById('rtkBaseline').querySelector('.rtk-value').textContent = rtkData.baseline.toFixed(1) + ' km';
+            }
+        }
+
+        function posicionExitosa(position) {
+            // Aplicar correcciones RTK si está conectado
+            if (rtkConnected && rtkSystem.connected) {
+                position = rtkSystem.applyCorrections(position);
+            }
+
+            currentPosition = position;
+            
+            const lat = position.coords.latitude.toFixed(8);
+            const lon = position.coords.longitude.toFixed(8);
+            const alt = position.coords.altitude ? position.coords.altitude.toFixed(3) : 'N/A';
+            const accuracy = position.coords.accuracy.toFixed(3);
+            const altAccuracy = position.coords.altitudeAccuracy ? position.coords.altitudeAccuracy.toFixed(3) : 'N/A';
+            
+            let info = `
+                📍 Posición actual:<br>
+                Latitud: ${lat}°<br>
+                Longitud: ${lon}°<br>
+                Altitud: ${alt} m<br>
+                Precisión H: ${accuracy} m<br>
+                Precisión V: ${altAccuracy} m
+            `;
+            
+            let estado = 'activo';
+            let mensaje = 'GPS Activo';
+            
+            if (modoActual === 'rtk' && rtkConnected) {
+                if (rtkSolutionType === 'FIX') {
+                    estado = 'rtk-fix';
+                    mensaje = 'RTK FIX - Precisión Centimétrica';
+                    info += `<br><br>🎯 Solución RTK FIX alcanzada<br>Precisión: ${(accuracy * 100).toFixed(1)} cm`;
+                } else if (rtkSolutionType === 'FLOAT') {
+                    estado = 'rtk-float';
+                    mensaje = 'RTK FLOAT - Precisión Decimétrica';
+                    info += `<br><br>⚡ Solución RTK FLOAT<br>Precisión: ${(accuracy * 100).toFixed(1)} cm`;
+                } else {
+                    mensaje = 'DGPS - Esperando RTK Fix';
+                }
+            } else if (parseFloat(accuracy) > 5) {
+                info += '<br><br>⚠️ Baja precisión. Mejore la recepción satelital.';
+            }
+            
+            actualizarEstadoGPS(estado, mensaje, info);
+            actualizarIndicadorPrecision(parseFloat(accuracy));
+        }
+
+        function actualizarIndicadorPrecision(accuracy) {
+            const indicator = document.getElementById('accuracyIndicator');
+            const fill = document.getElementById('accuracyFill');
+            const text = document.getElementById('accuracyText');
+            
+            indicator.style.display = 'flex';
+            
+            // Calcular porcentaje de precisión (100% = 0.01m, 0% = 10m+)
+            let percentage = 100;
+            if (accuracy < 0.01) {
+                percentage = 100;
+                text.textContent = (accuracy * 100).toFixed(1) + ' cm (Excelente)';
+            } else if (accuracy < 0.1) {
+                percentage = 90 - ((accuracy - 0.01) / 0.09) * 20;
+                text.textContent = (accuracy * 100).toFixed(1) + ' cm (Muy Buena)';
+            } else if (accuracy < 1) {
+                percentage = 70 - ((accuracy - 0.1) / 0.9) * 30;
+                text.textContent = accuracy.toFixed(2) + ' m (Buena)';
+            } else if (accuracy < 5) {
+                percentage = 40 - ((accuracy - 1) / 4) * 30;
+                text.textContent = accuracy.toFixed(1) + ' m (Media)';
+            } else {
+                percentage = Math.max(0, 10 - ((accuracy - 5) / 5) * 10);
+                text.textContent = accuracy.toFixed(1) + ' m (Baja)';
+            }
+            
+            fill.style.width = percentage + '%';
+        }
+
+        function actualizarEstadoGPS(estado, mensaje, info) {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            const gpsInfo = document.getElementById('gpsInfo');
+            const gpsStatus = document.getElementById('gpsStatus');
+            
+            statusDot.classList.remove('active', 'rtk-fix', 'rtk-float', 'error');
+            gpsStatus.classList.remove('active', 'rtk-fix', 'rtk-float', 'error');
+            
+            if (estado === 'activo') {
+                statusDot.classList.add('active');
+                gpsStatus.classList.add('active');
+            } else if (estado === 'rtk-fix') {
+                statusDot.classList.add('rtk-fix');
+                gpsStatus.classList.add('rtk-fix');
+            } else if (estado === 'rtk-float') {
+                statusDot.classList.add('rtk-float');
+                gpsStatus.classList.add('rtk-float');
+            } else if (estado === 'error') {
+                statusDot.classList.add('error');
+                gpsStatus.classList.add('error');
+            }
+            
+            statusText.textContent = 'Estado: ' + mensaje;
+            gpsInfo.innerHTML = info;
+        }
+
+        function errorGPS(error) {
+            let mensaje = '';
+            let info = '';
+            
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    mensaje = 'Permiso denegado';
+                    info = 'Permita el acceso a la ubicación en la configuración del navegador.';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    mensaje = 'Ubicación no disponible';
+                    info = 'Verifique que el GPS esté activado y tenga visibilidad del cielo.';
+                    break;
+                case error.TIMEOUT:
+                    mensaje = 'Tiempo agotado';
+                    info = 'La solicitud tardó demasiado. Intente nuevamente.';
+                    break;
+                default:
+                    mensaje = 'Error desconocido';
+                    info = 'Ocurrió un error al obtener la ubicación.';
+            }
+            
+            actualizarEstadoGPS('error', mensaje, info);
+        }
+
+        function capturarPunto(numeroPunto) {
+            if (!currentPosition) {
+                alert('No hay señal GPS disponible. Espere la conexión.');
+                return;
+            }
+
+            const accuracy = currentPosition.coords.accuracy;
+            let warningMessage = '';
+
+            if (modoActual === 'rtk') {
+                if (rtkSolutionType !== 'FIX' && rtkSolutionType !== 'FLOAT') {
+                    warningMessage = 'No hay solución RTK activa. La precisión será limitada.';
+                } else if (rtkSolutionType === 'FLOAT') {
+                    warningMessage = `Solución RTK FLOAT (precisión: ${(accuracy * 100).toFixed(1)} cm). Para mayor precisión, espere RTK FIX.`;
+                }
+            } else if (accuracy > 5) {
+                warningMessage = `Precisión actual: ${accuracy.toFixed(1)}m (baja). Mejore la recepción.`;
+            }
+
+            if (warningMessage && !confirm(warningMessage + '\n\n¿Capturar de todas formas?')) {
+                return;
+            }
+
+            const lat = currentPosition.coords.latitude;
+            const lon = currentPosition.coords.longitude;
+            const alt = currentPosition.coords.altitude || 0;
+
+            document.getElementById(`lat${numeroPunto}`).value = lat.toFixed(8);
+            document.getElementById(`lon${numeroPunto}`).value = lon.toFixed(8);
+            document.getElementById(`elev${numeroPunto}`).value = alt.toFixed(3);
+
+            const savedDiv = document.getElementById(`saved${numeroPunto}`);
+            savedDiv.classList.add('show');
+            setTimeout(() => savedDiv.classList.remove('show'), 3000);
+
+            // Sonido de confirmación
+            reproducirBeep(800, 100);
+        }
+
+        function reproducirBeep(frequency, duration) {
+            if (window.AudioContext || window.webkitAudioContext) {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = frequency;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration/1000);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration/1000);
+            }
+        }
+
+        function calcularDesnivel() {
+            const lat1 = parseFloat(document.getElementById('lat1').value);
+            const lon1 = parseFloat(document.getElementById('lon1').value);
+            const elev1 = parseFloat(document.getElementById('elev1').value);
+            
+            const lat2 = parseFloat(document.getElementById('lat2').value);
+            const lon2 = parseFloat(document.getElementById('lon2').value);
+            const elev2 = parseFloat(document.getElementById('elev2').value);
+
+            if (isNaN(lat1) || isNaN(lon1) || isNaN(elev1) || 
+                isNaN(lat2) || isNaN(lon2) || isNaN(elev2)) {
+                alert('Complete todos los campos con valores numéricos válidos.');
+                return;
+            }
+
+            // Calcular desnivel
+            const desnivel = elev1 - elev2;
+
+            // Calcular distancia horizontal (Haversine)
+            const R = 6371000;
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δφ = (lat2 - lat1) * Math.PI / 180;
+            const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            const distanciaHorizontal = R * c;
+
+            // Calcular azimut
+            const y = Math.sin(Δλ) * Math.cos(φ2);
+            const x = Math.cos(φ1) * Math.sin(φ2) -
+                      Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+            let azimut = Math.atan2(y, x) * 180 / Math.PI;
+            azimut = (azimut + 360) % 360;
+
+            // Calcular pendiente y ángulo
+            const pendiente = (desnivel / distanciaHorizontal) * 100;
+            const angulo = Math.atan(Math.abs(desnivel) / distanciaHorizontal) * 180 / Math.PI;
+            const distanciaReal = Math.sqrt(Math.pow(distanciaHorizontal, 2) + Math.pow(desnivel, 2));
+
+            // Determinar precisión y método
+            let precision = 'N/A';
+            let metodo = 'Manual';
+            
+            if (modoActual === 'rtk' && rtkConnected) {
+                if (rtkSolutionType === 'FIX') {
+                    precision = '±1.5 cm';
+                    metodo = 'RTK FIX';
+                } else if (rtkSolutionType === 'FLOAT') {
+                    precision = '±10 cm';
+                    metodo = 'RTK FLOAT';
+                } else {
+                    precision = '±50 cm';
+                    metodo = 'DGPS';
+                }
+            } else if (modoActual === 'gps') {
+                metodo = 'GPS';
+                precision = currentPosition ? `±${currentPosition.coords.accuracy.toFixed(1)}m` : 'N/A';
+            }
+
+            // Mostrar resultados
+            document.getElementById('azimut').innerHTML = azimut.toFixed(2) + '<span class="result-unit">°</span>';
+            document.getElementById('distancia').innerHTML = distanciaHorizontal.toFixed(3) + '<span class="result-unit">m</span>';
+            document.getElementById('desnivel').innerHTML = desnivel.toFixed(3) + '<span class="result-unit">m</span>';
+            document.getElementById('pendiente').innerHTML = pendiente.toFixed(2) + '<span class="result-unit">%</span>';
+            document.getElementById('angulo').innerHTML = angulo.toFixed(2) + '<span class="result-unit">°</span>';
+            document.getElementById('distReal').innerHTML = distanciaReal.toFixed(3) + '<span class="result-unit">m</span>';
+            document.getElementById('precisionMed').innerHTML = precision;
+            document.getElementById('metodoUsado').textContent = metodo;
+
+            document.getElementById('results').classList.add('show');
+        }
+
+        // Cleanup al cerrar
+        window.addEventListener('beforeunload', () => {
+            detenerGPS();
+        });
     </script>
 </body>
 </html>
+           
